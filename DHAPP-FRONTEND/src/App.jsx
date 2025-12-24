@@ -1,14 +1,28 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { Box, CssBaseline } from "@mui/material"; // CssBaseline helps with cross-browser consistency
+import { useSelector } from "react-redux";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import BookDriver from "./pages/BookDriver";
 import BookTravel from "./pages/BookTravel";
 
 function App() {
+
+  // Protected Route Component
+  const PrivateRoute = ({ children }) => {
+    const { token } = useSelector((state) => state.logins);
+    return token ? children : <Navigate to="/login" />;
+  };
+
   return (
     <Router>
       {/* CssBaseline kicks in MUI's normalization */}
@@ -30,9 +44,33 @@ function App() {
         {/* flexGrow: 1 pushes the Footer down if content is short */}
         <Box component="main" sx={{ flexGrow: 1, width: "100%" }}>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/book-driver" element={<BookDriver />} />
-            <Route path="/book-travel" element={<BookTravel />} />
+            <Route path="/login" element={<Login />} />
+
+            {/* Wrap protected pages */}
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/book-driver"
+              element={
+                <PrivateRoute>
+                  <BookDriver />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/book-travel"
+              element={
+                <PrivateRoute>
+                  <BookTravel />
+                </PrivateRoute>
+              }
+            />
           </Routes>
         </Box>
 
