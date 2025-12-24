@@ -1,0 +1,14 @@
+/* Reset default margins to ensure full-screen coverage */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background-color: #f4f6f8; /* Light grey background for the whole app */
+  font-family: 'Roboto', sans-serif; /* MUI default font */
+}
+
+#root {
+  height: 100%; /* Ensures React root div takes full height */
+}
