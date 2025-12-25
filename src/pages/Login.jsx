@@ -30,7 +30,7 @@ const Login = () => {
     const endpoint = isSignup ? "/auth/signup" : "/auth/login";
     try {
       const res = await axios.post(
-        `http://127.0.0.1:8000${endpoint}`,
+        `${import.meta.env.VITE_API_BASE_URL}${endpoint}`,
         formData
       );
       dispatch(loginSuccess(res.data.access_token));
@@ -44,7 +44,9 @@ const Login = () => {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
-        `http://127.0.0.1:8000/auth/google?token=${credentialResponse.credential}`
+        `${import.meta.env.VITE_API_BASE_URL}/auth/google?token=${
+          credentialResponse.credential
+        }`
       );
       dispatch(loginSuccess(res.data.access_token));
       navigate("/");
@@ -96,6 +98,11 @@ const Login = () => {
               label="Password"
               type="password"
               margin="normal"
+              inputProps={{
+                maxLength: 50, // Hard limit for user typing
+                minLength: 6, // Good practice for minimum security
+              }}
+              helperText="Password must be between 6 and 50 characters"
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }

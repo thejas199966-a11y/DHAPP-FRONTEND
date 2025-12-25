@@ -6,7 +6,9 @@ export const fetchDrivers = createAsyncThunk(
   "drivers/fetchDrivers",
   async () => {
     // Assuming backend runs on port 8000
-    const response = await axios.get("http://127.0.0.1:8000/drivers/");
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL}/drivers/`
+    );
     return response?.data || [];
   }
 );
