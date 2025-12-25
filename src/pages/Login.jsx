@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Container,
   Paper,
@@ -7,6 +7,7 @@ import {
   Typography,
   Box,
   Divider,
+  LinearProgress,
 } from "@mui/material";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
@@ -23,6 +24,30 @@ const Login = () => {
   });
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Password strength function
+  const getPasswordStrength = (password) => {
+    const length = password.length;
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    if (length < 6) return { level: 0, text: "Very Weak", color: "error" };
+    if (length >= 6 && length <= 10 && (!hasUpper || !hasLower || !hasSpecial))
+      return { level: 1, text: "Weak", color: "warning" };
+    if (length >= 6 && length <= 10 && hasUpper && hasLower && hasSpecial)
+      return { level: 2, text: "Medium", color: "info" };
+    if (length >= 11 && length <= 13 && hasUpper && hasLower && hasSpecial)
+      return { level: 3, text: "Strong", color: "success" };
+    if (length > 13 && length <= 15 && hasLower && hasUpper && hasSpecial)
+      return { level: 4, text: "Very Strong", color: "success" };
+    return { level: 0, text: "Very Weak", color: "error" };
+  };
+
+  const passwordStrength = useMemo(
+    () => getPasswordStrength(formData.password),
+    [formData.password]
+  );
 
   // Handle Standard Login/Signup
   const handleSubmit = async (e) => {
@@ -99,14 +124,30 @@ const Login = () => {
               type="password"
               margin="normal"
               inputProps={{
-                maxLength: 50, // Hard limit for user typing
+                maxLength: 15, // Hard limit for user typing
                 minLength: 6, // Good practice for minimum security
               }}
-              helperText="Password must be between 6 and 50 characters"
+              helperText="Password must be 6-15 chars with uppercase, lowercase, special char"
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
             />
+            {isSignup && formData.password && (
+              <Box sx={{ mt: 1 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={(passwordStrength.level / 4) * 100}
+                  color={passwordStrength.color}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 0.5, textAlign: "center" }}
+                >
+                  {passwordStrength.text}
+                </Typography>
+              </Box>
+            )}
 
             <Button
               fullWidth

@@ -108,11 +108,11 @@ const Dashboard = () => {
               variant="contained"
               onClick={() => navigate("/book-travel")}
               sx={{
-                height: isMobile ? 80 : 120, // Taller buttons on desktop
+                height: isMobile ? 50 : 80, // Taller buttons on desktop
                 fontSize: isMobile ? "1.2rem" : "1.5rem",
                 borderRadius: 3,
                 textTransform: "none",
-                backgroundColor: "#1976d2",
+                backgroundColor: "#2f34cfff",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
@@ -140,11 +140,11 @@ const Dashboard = () => {
               variant="contained"
               onClick={() => navigate("/book-driver")}
               sx={{
-                height: isMobile ? 80 : 120,
+                height: isMobile ? 50 : 80,
                 fontSize: isMobile ? "1.2rem" : "1.5rem",
                 borderRadius: 3,
                 textTransform: "none",
-                backgroundColor: "#1976d2",
+                backgroundColor: "#2f34cfff",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",

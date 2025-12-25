@@ -8,7 +8,7 @@ const Footer = () => {
   return (
     <Box
       component="footer"
-      sx={{ py: 3, px: 2, mt: "auto", backgroundColor: "#f5f5f5" }}
+      sx={{ py: 3, px: 2, mt: "auto", backgroundColor: "#e3d8d8ff" }}
     >
       <Container maxWidth="lg">
         <Grid container spacing={4} justifyContent="space-between">
@@ -20,10 +20,10 @@ const Footer = () => {
               123 Main Street, Bangalore, India
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Email: support@drivehire.com
+              Email: support@dhapp.com
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Phone: +91 98765 43210
+              Phone: +91 82967 89262
             </Typography>
           </Grid>
           <Grid item xs={12} sm={6} sx={{ textAlign: "right" }}>
