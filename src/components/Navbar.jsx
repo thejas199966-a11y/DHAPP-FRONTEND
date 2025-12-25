@@ -17,12 +17,6 @@ const Navbar = () => {
           </Button>
         </Typography>
 
-        <Button color="inherit" component={Link} to="/book-driver">
-          Drivers
-        </Button>
-        <Button color="inherit" component={Link} to="/book-travel">
-          Travel
-        </Button>
         {user ? (
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography variant="body1" sx={{ mr: 2, ml: 2 }}>
