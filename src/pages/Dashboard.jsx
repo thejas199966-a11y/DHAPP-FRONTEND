@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Grid,
@@ -12,13 +12,22 @@ import {
 } from "@mui/material";
 import Carousel from "react-material-ui-carousel";
 import { useNavigate } from "react-router-dom";
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useTranslation } from "react-i18next";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import EditIcon from "@mui/icons-material/Edit";
+import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { setLocation, setLoadingLocation } from "../features/commonSlice";
+import LocationDialog from "../components/LocationDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const theme = useTheme();
+  const dispatch = useDispatch();
+  const { location } = useSelector((state) => state.common);
+  const [isDialogOpen, setDialogOpen] = useState(false);
 
   // These hooks return true if the screen matches the size
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Phones
@@ -34,6 +43,80 @@ const Dashboard = () => {
       title: "Safe Drivers",
     },
   ];
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    dispatch(setLoadingLocation());
+    setDialogOpen(false); // Close dialog if open
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          // Use OpenStreetMap (Nominatim) Free API for Reverse Geocoding
+          const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+          const response = await axios.get(url);
+
+          const address = response.data.address;
+          // Extract city (Nominatim keys vary: city, town, village, county)
+          const city =
+            address.city ||
+            address.town ||
+            address.village ||
+            address.county ||
+            "Unknown Location";
+          const state = address.state;
+
+          dispatch(
+            setLocation({
+              city: city,
+              state: state,
+              coordinates: { lat: latitude, lng: longitude },
+              isManual: false,
+            })
+          );
+        } catch (error) {
+          console.error("Error fetching city name:", error);
+          dispatch(
+            setLocation({
+              city: "Bengaluru",
+              state: "Karnataka",
+              isManual: false,
+            })
+          );
+        }
+      },
+      (error) => {
+        console.error("Geolocation denied:", error);
+        // Default fallback if user denies permission
+        dispatch(
+          setLocation({ city: "Select Location", state: "", isManual: false })
+        );
+      }
+    );
+  };
+
+  useEffect(() => {
+    // Only detect if we haven't set it yet (or if it's the default 'Detecting...')
+    if (location.city === "Detecting...") {
+      detectLocation();
+    }
+  }, []);
+
+  const handleManualSelect = (city, state) => {
+    dispatch(
+      setLocation({
+        city: city,
+        state: state,
+        isManual: true,
+      })
+    );
+    setDialogOpen(false);
+  };
 
   return (
     // maxWidth="xl" allows it to be wider on large screens, but constrained on huge monitors
@@ -85,6 +168,48 @@ const Dashboard = () => {
         </Carousel>
       </Card>
 
+      {/* --- LOCATION SECTION --- */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: 3,
+          p: 2,
+          bgcolor: "white",
+          borderRadius: 2,
+          boxShadow: 1,
+        }}
+      >
+        <LocationOnIcon color="error" sx={{ mr: 1, fontSize: 30 }} />
+
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="caption" color="text.secondary" display="block">
+            Current Location
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: "bold", lineHeight: 1 }}>
+            {location.city} {location.state && `, ${location.state}`}
+          </Typography>
+        </Box>
+
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<EditIcon />}
+          onClick={() => setDialogOpen(true)}
+          sx={{ borderRadius: 5, textTransform: "none" }}
+        >
+          Change
+        </Button>
+      </Box>
+
+      {/* --- Dialog Component --- */}
+      <LocationDialog
+        open={isDialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSelect={handleManualSelect}
+        onAutoDetect={detectLocation}
+      />
+
       {/* 2. Action Buttons Section */}
       <Container maxWidth="lg">
         <Typography
@@ -93,7 +218,7 @@ const Dashboard = () => {
           gutterBottom
           sx={{ mb: 4, fontWeight: "medium", px: 2 }}
         >
-          {t('dashboard.welcome')}
+          {t("dashboard.welcome")}
         </Typography>
 
         <Grid
@@ -120,12 +245,12 @@ const Dashboard = () => {
                 flexDirection: "column",
                 justifyContent: "center",
                 boxShadow: 6,
-                '&:hover .arrow-icon': {
-                  transform: 'translateX(10px)',
+                "&:hover .arrow-icon": {
+                  transform: "translateX(10px)",
                 },
               }}
             >
-              {t('dashboard.book_travel')}
+              {t("dashboard.book_travel")}
               <Typography
                 variant="caption"
                 sx={{
@@ -135,9 +260,12 @@ const Dashboard = () => {
                   fontSize: "0.7rem",
                 }}
               >
-                {t('dashboard.sub_travel')}
+                {t("dashboard.sub_travel")}
               </Typography>
-              <ArrowForwardIcon className="arrow-icon" sx={{ transition: 'transform 0.3s ease', mt: 0.5 }} />
+              <ArrowForwardIcon
+                className="arrow-icon"
+                sx={{ transition: "transform 0.3s ease", mt: 0.5 }}
+              />
             </Button>
           </Grid>
 
@@ -156,12 +284,12 @@ const Dashboard = () => {
                 flexDirection: "column",
                 justifyContent: "center",
                 boxShadow: 6,
-                '&:hover .arrow-icon': {
-                  transform: 'translateX(10px)',
+                "&:hover .arrow-icon": {
+                  transform: "translateX(10px)",
                 },
               }}
             >
-              {t('dashboard.book_driver')}
+              {t("dashboard.book_driver")}
               <Typography
                 variant="caption"
                 sx={{
@@ -171,9 +299,12 @@ const Dashboard = () => {
                   fontSize: "0.7rem",
                 }}
               >
-                {t('dashboard.sub_driver')}
+                {t("dashboard.sub_driver")}
               </Typography>
-              <ArrowForwardIcon className="arrow-icon" sx={{ transition: 'transform 0.3s ease', mt: 0.5 }} />
+              <ArrowForwardIcon
+                className="arrow-icon"
+                sx={{ transition: "transform 0.3s ease", mt: 0.5 }}
+              />
             </Button>
           </Grid>
         </Grid>
