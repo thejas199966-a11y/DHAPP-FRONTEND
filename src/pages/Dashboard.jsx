@@ -12,9 +12,12 @@ import {
 } from "@mui/material";
 import Carousel from "react-material-ui-carousel";
 import { useNavigate } from "react-router-dom";
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { useTranslation } from "react-i18next";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const theme = useTheme();
 
   // These hooks return true if the screen matches the size
@@ -38,7 +41,7 @@ const Dashboard = () => {
     <Container
       maxWidth="xl"
       disableGutters={isMobile}
-      sx={{ mt: isMobile ? 0 : 4, mb: 4, px: isMobile ? 0 : 2 }}
+      sx={{ mt: isMobile ? 0 : 4, mb: 8, px: isMobile ? 0 : 2 }}
     >
       {/* 1. Hero / Carousel Section */}
       <Card
@@ -90,7 +93,7 @@ const Dashboard = () => {
           gutterBottom
           sx={{ mb: 4, fontWeight: "medium", px: 2 }}
         >
-          What are you looking for today?
+          {t('dashboard.welcome')}
         </Typography>
 
         <Grid
@@ -108,8 +111,8 @@ const Dashboard = () => {
               variant="contained"
               onClick={() => navigate("/book-travel")}
               sx={{
-                height: isMobile ? 50 : 80, // Taller buttons on desktop
-                fontSize: isMobile ? "1.2rem" : "1.5rem",
+                height: isMobile ? 60 : 90, // Taller buttons on desktop
+                fontSize: isMobile ? "1rem" : "1.4rem",
                 borderRadius: 3,
                 textTransform: "none",
                 backgroundColor: "#2f34cfff",
@@ -117,20 +120,24 @@ const Dashboard = () => {
                 flexDirection: "column",
                 justifyContent: "center",
                 boxShadow: 6,
+                '&:hover .arrow-icon': {
+                  transform: 'translateX(10px)',
+                },
               }}
             >
-              Book Travel
+              {t('dashboard.book_travel')}
               <Typography
                 variant="caption"
                 sx={{
                   display: "block",
                   mt: 0.5,
                   opacity: 0.8,
-                  fontSize: "0.8rem",
+                  fontSize: "0.7rem",
                 }}
               >
-                Long trips & Agencies
+                {t('dashboard.sub_travel')}
               </Typography>
+              <ArrowForwardIcon className="arrow-icon" sx={{ transition: 'transform 0.3s ease', mt: 0.5 }} />
             </Button>
           </Grid>
 
@@ -140,8 +147,8 @@ const Dashboard = () => {
               variant="contained"
               onClick={() => navigate("/book-driver")}
               sx={{
-                height: isMobile ? 50 : 80,
-                fontSize: isMobile ? "1.2rem" : "1.5rem",
+                height: isMobile ? 60 : 90,
+                fontSize: isMobile ? "1rem" : "1.4rem",
                 borderRadius: 3,
                 textTransform: "none",
                 backgroundColor: "#2f34cfff",
@@ -149,20 +156,24 @@ const Dashboard = () => {
                 flexDirection: "column",
                 justifyContent: "center",
                 boxShadow: 6,
+                '&:hover .arrow-icon': {
+                  transform: 'translateX(10px)',
+                },
               }}
             >
-              Book a Driver
+              {t('dashboard.book_driver')}
               <Typography
                 variant="caption"
                 sx={{
                   display: "block",
                   mt: 0.5,
                   opacity: 0.8,
-                  fontSize: "0.8rem",
+                  fontSize: "0.7rem",
                 }}
               >
-                Hire for your own car
+                {t('dashboard.sub_driver')}
               </Typography>
+              <ArrowForwardIcon className="arrow-icon" sx={{ transition: 'transform 0.3s ease', mt: 0.5 }} />
             </Button>
           </Grid>
         </Grid>

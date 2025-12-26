@@ -1,0 +1,20 @@
+{
+  "navbar": {
+    "home": "Home",
+    "drivers": "Drivers",
+    "travel": "Travel"
+  },
+  "dashboard": {
+    "welcome": "What are you looking for today?",
+    "book_travel": "Book Travel",
+    "book_driver": "Book a Driver",
+    "sub_travel": "Long trips & Agencies",
+    "sub_driver": "Hire for your own car"
+  },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign Up",
+    "email": "Email Address",
+    "password": "Password"
+  }
+}

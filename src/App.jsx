@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -16,11 +16,11 @@ import BookDriver from "./pages/BookDriver";
 import BookTravel from "./pages/BookTravel";
 
 function App() {
-
   // Protected Route Component
   const PrivateRoute = ({ children }) => {
     const { token } = useSelector((state) => state.logins);
-    return token ? children : <Navigate to="/login" />;
+    // return token ? children : <Navigate to="/login" />;
+    return children;
   };
 
   return (
