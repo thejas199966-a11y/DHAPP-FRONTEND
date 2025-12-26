@@ -4,12 +4,11 @@ const commonSlice = createSlice({
   name: "common",
   initialState: {
     location: {
-      city: "Detecting...", // Default state
+      city: "Detecting...",
       state: "",
       coordinates: null,
-      isManual: false, // To know if user manually changed it
+      isManual: false,
     },
-    // You can add other app-wide settings here later (e.g., theme mode)
   },
   reducers: {
     setLocation: (state, action) => {
