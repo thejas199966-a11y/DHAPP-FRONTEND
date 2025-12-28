@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Notification from "./components/Notification";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import BookDriver from "./pages/BookDriver";
@@ -27,6 +28,7 @@ function App() {
     <Router>
       {/* CssBaseline kicks in MUI's normalization */}
       <CssBaseline />
+      <Notification />
 
       {/* minHeight: '100vh' ensures the app is AT LEAST the height of the screen.
          display: 'flex' + column allows us to push the footer to the bottom.

@@ -18,6 +18,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import EditIcon from "@mui/icons-material/Edit";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
+import { showNotification } from "../features/notificationSlice";
 import { setLocation, setLoadingLocation } from "../features/commonSlice";
 import LocationDialog from "../components/LocationDialog";
 
@@ -46,7 +47,7 @@ const Dashboard = () => {
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      dispatch(showNotification({ message: "Geolocation is not supported by your browser", severity: "error" }));
       return;
     }
 
@@ -236,7 +237,7 @@ const Dashboard = () => {
               variant="contained"
               onClick={() => navigate("/book-travel")}
               sx={{
-                height: isMobile ? 60 : 90, // Taller buttons on desktop
+                height: isMobile ? 80 : 100, // Taller buttons on desktop
                 fontSize: isMobile ? "1rem" : "1.4rem",
                 borderRadius: 3,
                 textTransform: "none",
@@ -275,7 +276,7 @@ const Dashboard = () => {
               variant="contained"
               onClick={() => navigate("/book-driver")}
               sx={{
-                height: isMobile ? 60 : 90,
+                height: isMobile ? 80 : 100,
                 fontSize: isMobile ? "1rem" : "1.4rem",
                 borderRadius: 3,
                 textTransform: "none",

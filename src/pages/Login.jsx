@@ -12,6 +12,7 @@ import {
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../features/authSlice";
+import { showNotification } from "../features/notificationSlice";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -61,7 +62,7 @@ const Login = () => {
       dispatch(loginSuccess(res.data.access_token));
       navigate("/"); // Go to Dashboard
     } catch (err) {
-      alert("Error: " + (err.response?.data?.detail || "Login failed"));
+      dispatch(showNotification({ message: "Error: " + (err.response?.data?.detail || "Login failed"), severity: "error" }));
     }
   };
 
