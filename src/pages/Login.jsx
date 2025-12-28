@@ -59,10 +59,17 @@ const Login = () => {
         `${import.meta.env.VITE_API_BASE_URL}${endpoint}`,
         formData
       );
-      dispatch(loginSuccess(res.data.access_token));
+      dispatch(
+        loginSuccess({ token: res.data.access_token, user: res.data.user })
+      );
       navigate("/"); // Go to Dashboard
     } catch (err) {
-      dispatch(showNotification({ message: "Error: " + (err.response?.data?.detail || "Login failed"), severity: "error" }));
+      dispatch(
+        showNotification({
+          message: "Error: " + (err.response?.data?.detail || "Login failed"),
+          severity: "error",
+        })
+      );
     }
   };
 
@@ -74,7 +81,9 @@ const Login = () => {
           credentialResponse.credential
         }`
       );
-      dispatch(loginSuccess(res.data.access_token));
+      dispatch(
+        loginSuccess({ token: res.data.access_token, user: res.data.user })
+      );
       navigate("/");
     } catch (err) {
       console.error("Google Login Error", err);

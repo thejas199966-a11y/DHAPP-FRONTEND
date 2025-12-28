@@ -45,7 +45,7 @@ export default function BookDriver() {
 
   // 2. Local State for Filtering & Pagination
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("All"); // 'All', 'Sedan', 'SUV', etc.
+  const [filterType, setFilterType] = useState("ALL"); // 'All', 'Sedan', 'SUV', etc.
   const [sortBy, setSortBy] = useState("rating"); // 'rating', 'experience'
   const [page, setPage] = useState(1);
   const itemsPerPage = 6;
@@ -67,7 +67,7 @@ export default function BookDriver() {
 
       // Category Filter Logic
       const matchesType =
-        filterType === "All" || driver.vehicle_type === filterType;
+        filterType === "ALL" || driver.vehicle_type === filterType;
 
       return matchesSearch && matchesType;
     })
@@ -91,7 +91,6 @@ export default function BookDriver() {
     dispatch(showNotification({ message: "Booking Feature coming in next module!", severity: "info" }));
   };
 
-  // --- RENDER HELPERS ---
 
   // Skeleton Loader (Matches Card Layout)
   const renderSkeletons = () =>
@@ -201,11 +200,11 @@ export default function BookDriver() {
                 label="Vehicle Type"
                 onChange={(e) => setFilterType(e.target.value)}
               >
-                <MenuItem value="All">All Types</MenuItem>
-                <MenuItem value="Sedan">Sedan</MenuItem>
+                <MenuItem value="ALL">All Types</MenuItem>
+                <MenuItem value="SEDAN">Sedan</MenuItem>
                 <MenuItem value="SUV">SUV</MenuItem>
-                <MenuItem value="Hatchback">Hatchback</MenuItem>
-                <MenuItem value="Luxury">Luxury</MenuItem>
+                <MenuItem value="HATCHBACK">Hatchback</MenuItem>
+                <MenuItem value="LUXURY">Luxury</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -400,7 +399,7 @@ export default function BookDriver() {
                 sx={{ mt: 2 }}
                 onClick={() => {
                   setSearchTerm("");
-                  setFilterType("All");
+                  setFilterType("ALL");
                 }}
               >
                 Clear Filters

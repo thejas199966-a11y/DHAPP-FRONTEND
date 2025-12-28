@@ -8,7 +8,7 @@ import notificationReducer from '../features/notificationSlice';
 export const store = configureStore({
   reducer: {
     drivers: driverReducer,
-    logins: authReducer,
+    auth: authReducer,
     language: languageReducer,
     common: commonReducer,
     notification: notificationReducer,

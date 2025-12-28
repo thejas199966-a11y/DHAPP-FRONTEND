@@ -19,9 +19,8 @@ import BookTravel from "./pages/BookTravel";
 function App() {
   // Protected Route Component
   const PrivateRoute = ({ children }) => {
-    const { token } = useSelector((state) => state.logins);
-    // return token ? children : <Navigate to="/login" />;
-    return children;
+    const { token } = useSelector((state) => state.auth);
+    return token ? children : <Navigate to="/login" />;
   };
 
   return (
