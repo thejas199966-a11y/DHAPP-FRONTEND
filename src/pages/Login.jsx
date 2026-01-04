@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import {
-  Container,
   Paper,
   TextField,
   Button,
@@ -8,6 +7,12 @@ import {
   Box,
   Divider,
   LinearProgress,
+  ToggleButton,
+  ToggleButtonGroup,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
@@ -16,17 +21,38 @@ import { showNotification } from "../features/notificationSlice";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+// Icons
+import PersonIcon from "@mui/icons-material/Person";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import BusinessIcon from "@mui/icons-material/Business";
+
 const Login = () => {
   const [isSignup, setIsSignup] = useState(false);
+  const [role, setRole] = useState("user"); // 'user' | 'driver' | 'organisation'
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     full_name: "",
+    // Extra fields for specific roles
+    license_number: "", // For Driver
+    vehicle_type: "", // For Driver
+    phone_number: "", // For Driver
+    org_name: "", // For Organisation
+    contact_number: "", // For Organisation
+    address: "", // For Organisation
   });
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Password strength function
+  // Handle Role Toggle
+  const handleRoleChange = (event, newRole) => {
+    if (newRole !== null) {
+      setRole(newRole);
+    }
+  };
+
   const getPasswordStrength = (password) => {
     const length = password.length;
     const hasUpper = /[A-Z]/.test(password);
@@ -50,19 +76,28 @@ const Login = () => {
     [formData.password]
   );
 
-  // Handle Standard Login/Signup
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // In real app, endpoint changes based on role, or payload includes role
+    // For now, we simulate success for UI demo purposes
+
     const endpoint = isSignup ? "/auth/signup" : "/auth/login";
+
+    // Inject Role into payload
+    const payload = { ...formData, role: role };
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}${endpoint}`,
-        formData
+        payload
       );
+
+      // IMPORTANT: Backend must return the role in 'user' object for this to work perfectly.
+      // If backend doesn't yet, the Dashboard logic below might need a temporary hardcode.
       dispatch(
         loginSuccess({ token: res.data.access_token, user: res.data.user })
       );
-      navigate("/"); // Go to Dashboard
+      navigate("/");
     } catch (err) {
       dispatch(
         showNotification({
@@ -73,7 +108,6 @@ const Login = () => {
     }
   };
 
-  // Handle Google Login
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
@@ -103,31 +137,146 @@ const Login = () => {
       >
         <Paper
           elevation={3}
-          sx={{ p: 4, width: "100%", maxWidth: 400, textAlign: "center" }}
+          sx={{ p: 4, width: "100%", maxWidth: 450, textAlign: "center" }}
         >
-          <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold" }}>
-            {isSignup ? "Create Account" : "Welcome Back"}
+          {/* --- ROLE TOGGLE --- */}
+          <ToggleButtonGroup
+            value={role}
+            exclusive
+            onChange={handleRoleChange}
+            aria-label="User Role"
+            color="primary"
+            sx={{ mb: 3, width: "100%" }}
+          >
+            <ToggleButton value="user" sx={{ flex: 1 }}>
+              <PersonIcon sx={{ mr: 1 }} /> User
+            </ToggleButton>
+            <ToggleButton value="driver" sx={{ flex: 1 }}>
+              <DirectionsCarIcon sx={{ mr: 1 }} /> Driver
+            </ToggleButton>
+            <ToggleButton value="organisation" sx={{ flex: 1 }}>
+              <BusinessIcon sx={{ mr: 1 }} /> Org
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          <Typography variant="h5" sx={{ mb: 1, fontWeight: "bold" }}>
+            {isSignup
+              ? `Create ${role.charAt(0).toUpperCase() + role.slice(1)} Account`
+              : `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            {role === "driver"
+              ? "Manage your rides and earnings"
+              : role === "organisation"
+              ? "Manage your fleet and drivers"
+              : "Book rides and travel packages"}
           </Typography>
 
           <form onSubmit={handleSubmit}>
             {isSignup && (
-              <TextField
-                fullWidth
-                label="Full Name"
-                margin="normal"
-                onChange={(e) =>
-                  setFormData({ ...formData, full_name: e.target.value })
-                }
-              />
+              <>
+                {/* Fields for User/Driver Full Name */}
+                {role !== "organisation" && (
+                  <TextField
+                    fullWidth
+                    label="Full Name"
+                    margin="normal"
+                    onChange={(e) =>
+                      setFormData({ ...formData, full_name: e.target.value })
+                    }
+                  />
+                )}
+
+                {/* Fields Specific to Organisation */}
+                {role === "organisation" && (
+                  <>
+                    <TextField
+                      fullWidth
+                      label="Organisation Name"
+                      margin="normal"
+                      onChange={(e) =>
+                        setFormData({ ...formData, org_name: e.target.value })
+                      }
+                    />
+                    <TextField
+                      fullWidth
+                      label="Contact Number"
+                      margin="normal"
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contact_number: e.target.value,
+                        })
+                      }
+                    />
+                    <TextField
+                      fullWidth
+                      label="Address"
+                      margin="normal"
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                    />
+                  </>
+                )}
+
+                {/* Fields Specific to Driver */}
+                {role === "driver" && (
+                  <>
+                    <TextField
+                      fullWidth
+                      label="Phone Number"
+                      margin="normal"
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          phone_number: e.target.value,
+                        })
+                      }
+                    />
+                    <TextField
+                      fullWidth
+                      label="Driving License Number"
+                      margin="normal"
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          license_number: e.target.value,
+                        })
+                      }
+                    />
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel>Vehicle Type</InputLabel>
+                      <Select
+                        value={formData.vehicle_type}
+                        label="Vehicle Type"
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            vehicle_type: e.target.value,
+                          })
+                        }
+                      >
+                        <MenuItem value="SEDAN">SEDAN</MenuItem>
+                        <MenuItem value="SUV">SUV</MenuItem>
+                        <MenuItem value="HATCHBACK">HATCHBACK</MenuItem>
+                        <MenuItem value="LUXURY">LUXURY</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </>
+                )}
+              </>
             )}
+
             <TextField
               fullWidth
-              label="Email"
+              label={role === "organisation" ? "Business Email" : "Email"}
               margin="normal"
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
             />
+
             <TextField
               fullWidth
               label="Password"
@@ -142,6 +291,7 @@ const Login = () => {
                 setFormData({ ...formData, password: e.target.value })
               }
             />
+
             {isSignup && formData.password && (
               <Box sx={{ mt: 1 }}>
                 <LinearProgress
@@ -170,14 +320,18 @@ const Login = () => {
             </Button>
           </form>
 
-          <Divider sx={{ my: 2 }}>OR</Divider>
-
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => console.log("Login Failed")}
-            />
-          </Box>
+          {/* Social Login only for 'user' role usually */}
+          {role === "user" && (
+            <>
+              <Divider sx={{ my: 2 }}>OR</Divider>
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => console.log("Login Failed")}
+                />
+              </Box>
+            </>
+          )}
 
           <Button sx={{ mt: 2 }} onClick={() => setIsSignup(!isSignup)}>
             {isSignup

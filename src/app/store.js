@@ -4,6 +4,8 @@ import authReducer from "../features/authSlice";
 import languageReducer from '../features/languageSlice';
 import commonReducer from '../features/commonSlice';
 import notificationReducer from '../features/notificationSlice';
+import userReducer from '../features/userSlice';
+import travelsReducer from '../features/travelSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,5 +14,7 @@ export const store = configureStore({
     language: languageReducer,
     common: commonReducer,
     notification: notificationReducer,
+    user: userReducer,
+    travels: travelsReducer,
   },
 });

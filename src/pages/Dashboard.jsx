@@ -21,6 +21,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { showNotification } from "../features/notificationSlice";
 import { setLocation, setLoadingLocation } from "../features/commonSlice";
 import LocationDialog from "../components/LocationDialog";
+import BookTravel from "../components/TripPlanner";
+import TripPlanner from "../components/TripPlanner";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -158,7 +160,7 @@ const Dashboard = () => {
                 }}
               >
                 <Typography
-                  variant={isMobile ? "h5" : "h3"} // Smaller font on mobile
+                  variant={isMobile ? "h6" : "h4"} // Smaller font on mobile
                   sx={{ color: "white", fontWeight: "bold" }}
                 >
                   {item.title}
@@ -210,6 +212,8 @@ const Dashboard = () => {
         onSelect={handleManualSelect}
         onAutoDetect={detectLocation}
       />
+
+      <TripPlanner />
 
       {/* 2. Action Buttons Section */}
       <Container maxWidth="lg">
