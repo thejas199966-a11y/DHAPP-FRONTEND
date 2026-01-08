@@ -161,8 +161,8 @@ const Login = () => {
 
           <Typography variant="h5" sx={{ mb: 1, fontWeight: "bold" }}>
             {isSignup
-              ? `Create ${role.charAt(0).toUpperCase() + role.slice(1)} Account`
-              : `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
+              ? `Create Account`
+              : `Login`}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             {role === "driver"

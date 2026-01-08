@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import LanguageIcon from "@mui/icons-material/Language"; // The Globe Icon
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { setLanguage } from "../features/languageSlice";
@@ -21,6 +21,7 @@ import { logout } from "../features/authSlice";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
+  const location = useLocation();
 
   const { t, i18n } = useTranslation(); // The hook to translate text
   const dispatch = useDispatch();
@@ -66,7 +67,7 @@ const Navbar = () => {
         <DirectionsCarIcon sx={{ mr: 1, ml: 2 }} />
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           <Button color="inherit" component={Link} to="/">
-            DhApp
+            DHire
           </Button>
         </Typography>
 
@@ -133,14 +134,16 @@ const Navbar = () => {
             </Menu>
           </Box>
         ) : (
-          <>
-            <Button color="inherit" component={Link} to="/login">
-              {t("auth.login")}
-            </Button>
-            <Button color="inherit" component={Link} to="/login">
-              {t("auth.signup")}
-            </Button>
-          </>
+          location.pathname !== "/login" && (
+            <>
+              <Button color="inherit" component={Link} to="/login">
+                {t("auth.login")}
+              </Button>
+              <Button color="inherit" component={Link} to="/login">
+                {t("auth.signup")}
+              </Button>
+            </>
+          )
         )}
       </Toolbar>
     </AppBar>
