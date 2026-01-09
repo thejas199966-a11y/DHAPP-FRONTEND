@@ -39,7 +39,7 @@ const OrgDashboard = () => {
       driver: "Unassigned",
       car: "Innova Crysta",
       status: "Maintenance",
-    },
+    }
   ];
 
   return (
@@ -100,48 +100,55 @@ const OrgDashboard = () => {
       <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mt: 2 }}>
         Live Fleet Status
       </Typography>
-      <TableContainer component={Paper} elevation={2}>
-        <Table>
-          <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-            <TableRow>
-              <TableCell>
-                <strong>Vehicle No</strong>
-              </TableCell>
-              <TableCell>
-                <strong>Driver</strong>
-              </TableCell>
-              <TableCell>
-                <strong>Car Model</strong>
-              </TableCell>
-              <TableCell>
-                <strong>Status</strong>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {fleet.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.id}</TableCell>
-                <TableCell>{item.driver}</TableCell>
-                <TableCell>{item.car}</TableCell>
+      <Box sx={{ overflowX: "auto" }}>
+        <TableContainer component={Paper} elevation={2}>
+          <Table sx={{ minWidth: 650 }} aria-label="simple table">
+            <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+              <TableRow>
                 <TableCell>
-                  <Chip
-                    label={item.status}
-                    color={
-                      item.status === "Available"
-                        ? "success"
-                        : item.status === "On Trip"
-                        ? "primary"
-                        : "warning"
-                    }
-                    size="small"
-                  />
+                  <strong>Vehicle No</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Driver</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Car Model</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Status</strong>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {fleet.map((item) => (
+                <TableRow
+                  key={item.id}
+                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                >
+                  <TableCell component="th" scope="row">
+                    {item.id}
+                  </TableCell>
+                  <TableCell>{item.driver}</TableCell>
+                  <TableCell>{item.car}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={item.status}
+                      color={
+                        item.status === "Available"
+                          ? "success"
+                          : item.status === "On Trip"
+                          ? "primary"
+                          : "warning"
+                      }
+                      size="small"
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </Container>
   );
 };

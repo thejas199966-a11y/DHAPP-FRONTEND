@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import Carousel from "react-material-ui-carousel";
 import { useNavigate } from "react-router-dom";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useTranslation } from "react-i18next";
 import TripPlanner from "../components/TripPlanner";
 import AnimatedTravelButton from "../components/AnimatedTravelButton";

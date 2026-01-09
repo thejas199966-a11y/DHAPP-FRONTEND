@@ -11,6 +11,8 @@ import {
   IconButton,
   CircularProgress,
   Skeleton,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
   MapContainer,
@@ -86,6 +88,8 @@ const MapController = ({ center, routeBounds }) => {
 };
 
 export default function TripPlanner() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { location: currentLocation } = useSelector((state) => state.common);
   const { tripData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
@@ -316,16 +320,14 @@ export default function TripPlanner() {
       sx={{
         mt: 3,
         mb: 2,
-        ml: 2,
-        height: "calc(100vh - 100px)",
-        display: "flex",
-        flexDirection: "column",
+        mx: isMobile ? 0 : 2,
+        px: isMobile ? 1 : 2,
       }}
     >
-      <Grid container spacing={2} sx={{ flexGrow: 1, height: "100%" }}>
+      <Grid container spacing={2}>
         {/* --- LEFT PANEL: FORM --- */}
-        <Grid item xs={12} md={4} sx={{ height: "70%" }}>
-          <Paper elevation={3} sx={{ p: 3, height: "100%", overflowY: "auto" }}>
+        <Grid item xs={12} md={4}>
+          <Paper elevation={3} sx={{ p: isMobile ? 2 : 3 }}>
             {/* 3. CONDITIONAL RENDERING: SKELETON VS FORM */}
             {loading ? (
               <Box sx={{ height: "100%" }}>
@@ -479,11 +481,11 @@ export default function TripPlanner() {
         </Grid>
 
         {/* --- RIGHT PANEL: MAP --- */}
-        <Grid item xs={12} md={8} sx={{ height: "70%", minWidth: "500px" }}>
+        <Grid item xs={12} md={8} sx={{ minWidth: "500px" }}>
           <Paper
             elevation={3}
             sx={{
-              height: "100%",
+              height: isMobile ? "70vh" : "70vh",
               width: "100%",
               borderRadius: 2,
               overflow: "hidden",
