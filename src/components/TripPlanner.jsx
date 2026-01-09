@@ -30,6 +30,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import FmdGoodIcon from "@mui/icons-material/FmdGood";
 import NavigationIcon from "@mui/icons-material/Navigation";
+import GpsFixedIcon from "@mui/icons-material/GpsFixed";
 
 // Redux & Axios
 import { useSelector, useDispatch } from "react-redux";
@@ -85,6 +86,51 @@ const MapController = ({ center, routeBounds }) => {
   }, [map]);
 
   return null;
+};
+
+const RecenterControl = ({
+  mapCenter,
+  startCoords,
+  endCoords,
+  routePositions,
+}) => {
+  const map = useMap();
+
+  const handleRecenter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (routePositions && routePositions.length > 0) {
+      map.fitBounds(routePositions, { padding: [50, 50] });
+    } else if (startCoords && endCoords) {
+      const bounds = L.latLngBounds([
+        [startCoords.lat, startCoords.lng],
+        [endCoords.lat, endCoords.lng],
+      ]);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    } else if (startCoords) {
+      map.flyTo([startCoords.lat, startCoords.lng], 13);
+    } else {
+      map.flyTo(mapCenter, 13);
+    }
+  };
+
+  const controlStyle = {
+    position: "absolute",
+    top: "90px", // Below zoom controls
+    left: "10px",
+    zIndex: 1000,
+  };
+
+  return (
+    <div style={controlStyle}>
+      <Paper elevation={4}>
+        <IconButton onClick={handleRecenter} title="Recenter map">
+          <GpsFixedIcon />
+        </IconButton>
+      </Paper>
+    </div>
+  );
 };
 
 export default function TripPlanner() {
@@ -517,6 +563,13 @@ export default function TripPlanner() {
                   <MapController
                     center={mapCenter}
                     routeBounds={routePositions}
+                  />
+
+                  <RecenterControl
+                    mapCenter={mapCenter}
+                    startCoords={startCoords}
+                    endCoords={endCoords}
+                    routePositions={routePositions}
                   />
 
                   {routePositions.length > 0 && (

@@ -17,10 +17,10 @@ const Footer = () => {
               Contact Us
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              123 Main Street, Bangalore, India
+              Bangalore, India
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Email: support@dhapp.com
+              Email: support@dhire.com
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Phone: +91 82967 89262

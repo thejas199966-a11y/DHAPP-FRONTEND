@@ -302,6 +302,7 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
           mt: 0.5,
           zIndex: 20,
           opacity: isAnimating ? 0 : 1,
+          color: "text.primary"
         }}
       />
 
