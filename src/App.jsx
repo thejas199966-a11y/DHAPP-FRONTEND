@@ -5,8 +5,9 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Box, CssBaseline } from "@mui/material";
+import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { useSelector } from "react-redux";
+import { lightTheme, darkTheme } from "./theme";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -22,6 +23,9 @@ import DriverDashboard from "./pages/DriverDashboard";
 import OrgDashboard from "./pages/OrgDashboard";
 
 function App() {
+  const { mode } = useSelector((state) => state.theme);
+  const theme = mode === "light" ? lightTheme : darkTheme;
+
   // --- 1. SMART HOME COMPONENT (Redirects based on Role) ---
   const RoleBasedHome = () => {
     const { token, user } = useSelector((state) => state.auth);
@@ -57,58 +61,62 @@ function App() {
 
   return (
     <Router>
-      <CssBaseline />
-      <Notification />
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          width: "100vw",
-        }}
-      >
-        <Navbar />
-        <Box component="main" sx={{ flexGrow: 1, width: "100%" }}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Notification />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100vh",
+            width: "100vw",
+            bgcolor: "background.default",
+            color: "text.primary",
+          }}
+        >
+          <Navbar />
+          <Box component="main" sx={{ flexGrow: 1, width: "100%" }}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
 
-            {/* Root Path: Decides which Dashboard to show */}
-            <Route path="/" element={<RoleBasedHome />} />
+              {/* Root Path: Decides which Dashboard to show */}
+              <Route path="/" element={<RoleBasedHome />} />
 
-            {/* --- RESTRICTED USER ROUTES --- */}
-            {/* Only 'user' role can access these. Drivers/Orgs will be redirected to Home */}
-            <Route
-              path="/book-driver"
-              element={
-                <RoleProtectedRoute allowedRoles={["user"]}>
-                  <BookDriver />
-                </RoleProtectedRoute>
-              }
-            />
+              {/* --- RESTRICTED USER ROUTES --- */}
+              {/* Only 'user' role can access these. Drivers/Orgs will be redirected to Home */}
+              <Route
+                path="/book-driver"
+                element={
+                  <RoleProtectedRoute allowedRoles={["user"]}>
+                    <BookDriver />
+                  </RoleProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/book-travel"
-              element={
-                <RoleProtectedRoute allowedRoles={["user"]}>
-                  <BookTravel />
-                </RoleProtectedRoute>
-              }
-            />
+              <Route
+                path="/book-travel"
+                element={
+                  <RoleProtectedRoute allowedRoles={["user"]}>
+                    <BookTravel />
+                  </RoleProtectedRoute>
+                }
+              />
 
-            {/* If you add specific routes for drivers later, you restrict them like this: */}
-            {/* <Route 
-              path="/my-trips" 
-              element={
-                <RoleProtectedRoute allowedRoles={['driver']}>
-                   <DriverTrips />
-                </RoleProtectedRoute>
-              } 
-            /> 
-            */}
-          </Routes>
+              {/* If you add specific routes for drivers later, you restrict them like this: */}
+              {/* <Route 
+                path="/my-trips" 
+                element={
+                  <RoleProtectedRoute allowedRoles={['driver']}>
+                    <DriverTrips />
+                  </RoleProtectedRoute>
+                } 
+              /> 
+              */}
+            </Routes>
+          </Box>
+          <Footer />
         </Box>
-        <Footer />
-      </Box>
+      </ThemeProvider>
     </Router>
   );
 }

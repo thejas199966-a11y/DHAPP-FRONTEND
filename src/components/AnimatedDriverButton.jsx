@@ -1,40 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { Button, Typography, Box } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { keyframes } from "@emotion/react";
-
-// --- 0. Helper Hook for System Theme Detection ---
-const useSystemTheme = () => {
-  // Initialize based on current match
-  const [isDark, setIsDark] = useState(
-    () =>
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
-
-  useEffect(() => {
-    const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (e) => setIsDark(e.matches);
-
-    // Modern browsers
-    if (matchMedia.addEventListener) {
-      matchMedia.addEventListener("change", handleChange);
-    } else {
-      // Older fallback
-      matchMedia.addListener(handleChange);
-    }
-
-    return () => {
-      if (matchMedia.removeEventListener) {
-        matchMedia.removeEventListener("change", handleChange);
-      } else {
-        matchMedia.removeListener(handleChange);
-      }
-    };
-  }, []);
-
-  return isDark;
-};
 
 // --- 1. Define Animations ---
 
@@ -203,8 +171,8 @@ const RealisticCityIcon = ({ isNight }) => {
 
 const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
   const [isAnimating, setIsAnimating] = useState(false);
-  // Get the system preference
-  const isSystemDark = useSystemTheme();
+  const { mode } = useSelector((state) => state.theme);
+  const isNight = mode === "dark";
 
   const handleClick = () => {
     if (isAnimating) return;
@@ -215,11 +183,11 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
   };
 
   // Select the appropriate sky animation based on system theme
-  const selectedSkyAnimation = isSystemDark ? skyToNight : skyToDay;
-  const roadColor = isSystemDark
+  const selectedSkyAnimation = isNight ? skyToNight : skyToDay;
+  const roadColor = isNight
     ? "linear-gradient(to top, #111, #333)"
     : "linear-gradient(to top, #444, #777)";
-  const roadBorder = isSystemDark ? "#555" : "#999";
+  const roadBorder = isNight ? "#555" : "#999";
 
   return (
     <Button
@@ -231,7 +199,7 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
         fontSize: isMobile ? "1rem" : "1.4rem",
         borderRadius: 3,
         textTransform: "none",
-        backgroundColor: "#2f34cfff",
+        backgroundColor: "primary.main",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -246,7 +214,14 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
       }}
     >
       {/* TEXT CONTENT (Z-Index 30 - Highest layer) */}
-      <Box sx={{ zIndex: 30, position: "relative", textAlign: "center" }}>
+      <Box
+        sx={{
+          zIndex: 30,
+          position: "relative",
+          textAlign: "center",
+          color: "text.primary",
+        }}
+      >
         {t("dashboard.book_driver")}
         <Typography
           variant="caption"
@@ -271,7 +246,7 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
       {isAnimating && (
         <>
           {/* 1. Realistic City Skyline (Background) */}
-          {/* Pass the isSystemDark prop to toggle windows */}
+          {/* Pass the isNight prop to toggle windows */}
           <Box
             sx={{
               position: "absolute",
@@ -283,7 +258,7 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
               zIndex: 1,
             }}
           >
-            <RealisticCityIcon isNight={isSystemDark} />
+            <RealisticCityIcon isNight={isNight} />
           </Box>
 
           {/* 2. The Road (Bottom) - Color changes slightly based on theme */}
@@ -302,7 +277,7 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
           />
 
           {/* 3. The Realistic Car with Passengers */}
-          {/* Pass isSystemDark prop to toggle headlights and phone glow brightness */}
+          {/* Pass isNight prop to toggle headlights and phone glow brightness */}
           <Box
             sx={{
               position: "absolute",
@@ -312,7 +287,7 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
               animation: `${carDriveRealistic} 2.2s ease-in-out forwards`,
             }}
           >
-            <SedanWithPeopleIcon isNight={isSystemDark} />
+            <SedanWithPeopleIcon isNight={isNight} />
           </Box>
         </>
       )}

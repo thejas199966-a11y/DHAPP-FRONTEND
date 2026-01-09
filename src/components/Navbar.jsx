@@ -13,14 +13,18 @@ import {
 } from "@mui/material";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import LanguageIcon from "@mui/icons-material/Language"; // The Globe Icon
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { setLanguage } from "../features/languageSlice";
 import { logout } from "../features/authSlice";
+import { toggleTheme } from "../features/themeSlice";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
+  const { mode } = useSelector((state) => state.theme);
   const location = useLocation();
 
   const { t, i18n } = useTranslation(); // The hook to translate text
@@ -61,8 +65,12 @@ const Navbar = () => {
     handleCloseMenu();
   };
 
+  const handleThemeChange = () => {
+    dispatch(toggleTheme());
+  };
+
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#448cebff" }}>
+    <AppBar position="static">
       <Toolbar>
         <DirectionsCarIcon sx={{ mr: 1, ml: 2 }} />
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -70,6 +78,13 @@ const Navbar = () => {
             DHire
           </Button>
         </Typography>
+
+        {/* --- THEME TOGGLE BUTTON --- */}
+        <Tooltip title="Toggle theme">
+          <IconButton color="inherit" onClick={handleThemeChange} size="large">
+            {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
+        </Tooltip>
 
         {/* --- LANGUAGE SWITCHER SECTION --- */}
         <Box sx={{ ml: 2 }}>

@@ -1,37 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { Button, Typography, Box } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { keyframes } from "@emotion/react";
-
-// --- 0. Helper Hook for System Theme Detection ---
-const useSystemTheme = () => {
-  const [isDark, setIsDark] = useState(
-    () =>
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
-
-  useEffect(() => {
-    const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (e) => setIsDark(e.matches);
-
-    if (matchMedia.addEventListener) {
-      matchMedia.addEventListener("change", handleChange);
-    } else {
-      matchMedia.addListener(handleChange);
-    }
-
-    return () => {
-      if (matchMedia.removeEventListener) {
-        matchMedia.removeEventListener("change", handleChange);
-      } else {
-        matchMedia.removeListener(handleChange);
-      }
-    };
-  }, []);
-
-  return isDark;
-};
 
 // --- 1. Define Animations ---
 
@@ -265,7 +236,8 @@ const MountainIcon = ({ isNight }) => {
 
 const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
   const [isAnimating, setIsAnimating] = useState(false);
-  const isSystemDark = useSystemTheme();
+  const { mode } = useSelector((state) => state.theme);
+  const isNight = mode === "dark";
 
   const handleClick = () => {
     if (isAnimating) return;
@@ -275,8 +247,8 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
     }, 2000);
   };
 
-  const selectedSkyAnimation = isSystemDark ? skyToNight : skyToDay;
-  const roadColor = isSystemDark
+  const selectedSkyAnimation = isNight ? skyToNight : skyToDay;
+  const roadColor = isNight
     ? "linear-gradient(to top, #111, #333)"
     : "linear-gradient(to top, #333, #666)";
 
@@ -290,7 +262,7 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
         fontSize: isMobile ? "1rem" : "1.4rem",
         borderRadius: 3,
         textTransform: "none",
-        backgroundColor: "#2f34cfff",
+        backgroundColor: "primary.main",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -305,7 +277,14 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
       }}
     >
       {/* TEXT CONTENT */}
-      <Box sx={{ zIndex: 20, position: "relative", textAlign: "center" }}>
+      <Box
+        sx={{
+          zIndex: 20,
+          position: "relative",
+          textAlign: "center",
+          color: "text.primary",
+        }}
+      >
         {t("dashboard.book_travel")}
         <Typography
           variant="caption"
@@ -339,7 +318,7 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
               zIndex: 2,
             }}
           >
-            <BirdsGroupIcon isNight={isSystemDark} />
+            <BirdsGroupIcon isNight={isNight} />
           </Box>
 
           {/* 2. Foggy Mountain Background (Behind road) */}
@@ -354,7 +333,7 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
               zIndex: 1,
             }}
           >
-            <MountainIcon isNight={isSystemDark} />
+            <MountainIcon isNight={isNight} />
           </Box>
 
           {/* 3. The Road (Bottom) */}
@@ -366,7 +345,8 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
               width: "100%",
               height: "35%",
               background: roadColor,
-              borderTop: "2px solid white",
+              borderTop: "2px solid",
+              borderColor: "text.primary",
               animation: `${elementFadeIn} 0.5s ease-out forwards`,
               zIndex: 2,
             }}
@@ -384,7 +364,7 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
               animation: `${driveAcross} 1.8s linear forwards`,
             }}
           >
-            <SedanIcon isNight={isSystemDark} />
+            <SedanIcon isNight={isNight} />
           </Box>
 
           {/* Car 2: SUV */}
@@ -398,7 +378,7 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
               animationDelay: "0.2s",
             }}
           >
-            <SUVIcon isNight={isSystemDark} />
+            <SUVIcon isNight={isNight} />
           </Box>
 
           {/* Car 3: Tempo */}
@@ -412,7 +392,7 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
               animationDelay: "0.4s",
             }}
           >
-            <TempoIcon isNight={isSystemDark} />
+            <TempoIcon isNight={isNight} />
           </Box>
         </>
       )}

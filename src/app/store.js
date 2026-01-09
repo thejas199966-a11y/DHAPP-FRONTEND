@@ -6,6 +6,7 @@ import commonReducer from '../features/commonSlice';
 import notificationReducer from '../features/notificationSlice';
 import userReducer from '../features/userSlice';
 import travelsReducer from '../features/travelSlice';
+import themeReducer from '../features/themeSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,5 +17,6 @@ export const store = configureStore({
     notification: notificationReducer,
     user: userReducer,
     travels: travelsReducer,
+    theme: themeReducer,
   },
 });
