@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useTranslation } from "react-i18next";
 import TripPlanner from "../components/TripPlanner";
+import AnimatedTravelButton from "../components/AnimatedTravelButton";
+import AnimatedDriverButton from "../components/AnimatedDriverButton";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -110,81 +112,19 @@ const Dashboard = () => {
              md={6} = Half width on Desktop/Tablet landscape
           */}
           <Grid item xs={12} md={6}>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={() => navigate("/book-travel")}
-              sx={{
-                height: isMobile ? 80 : 100, // Taller buttons on desktop
-                fontSize: isMobile ? "1rem" : "1.4rem",
-                borderRadius: 3,
-                textTransform: "none",
-                backgroundColor: "#2f34cfff",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                boxShadow: 6,
-                "&:hover .arrow-icon": {
-                  transform: "translateX(10px)",
-                },
-              }}
-            >
-              {t("dashboard.book_travel")}
-              <Typography
-                variant="caption"
-                sx={{
-                  display: "block",
-                  mt: 0.5,
-                  opacity: 0.8,
-                  fontSize: "0.7rem",
-                }}
-              >
-                {t("dashboard.sub_travel")}
-              </Typography>
-              <ArrowForwardIcon
-                className="arrow-icon"
-                sx={{ transition: "transform 0.3s ease", mt: 0.5 }}
-              />
-            </Button>
+            <AnimatedTravelButton
+              t={t}
+              navigate={navigate}
+              isMobile={isMobile}
+            />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={() => navigate("/book-driver")}
-              sx={{
-                height: isMobile ? 80 : 100,
-                fontSize: isMobile ? "1rem" : "1.4rem",
-                borderRadius: 3,
-                textTransform: "none",
-                backgroundColor: "#2f34cfff",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                boxShadow: 6,
-                "&:hover .arrow-icon": {
-                  transform: "translateX(10px)",
-                },
-              }}
-            >
-              {t("dashboard.book_driver")}
-              <Typography
-                variant="caption"
-                sx={{
-                  display: "block",
-                  mt: 0.5,
-                  opacity: 0.8,
-                  fontSize: "0.7rem",
-                }}
-              >
-                {t("dashboard.sub_driver")}
-              </Typography>
-              <ArrowForwardIcon
-                className="arrow-icon"
-                sx={{ transition: "transform 0.3s ease", mt: 0.5 }}
-              />
-            </Button>
+            <AnimatedDriverButton
+              t={t}
+              navigate={navigate}
+              isMobile={isMobile}
+            />
           </Grid>
         </Grid>
       </Container>

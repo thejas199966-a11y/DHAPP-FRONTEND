@@ -133,6 +133,9 @@ export default function TripPlanner() {
           const res = await axios.get(url);
           const exactAddress = res.data.display_name;
           setFormData((prev) => ({ ...prev, startPoint: exactAddress }));
+          if (formData.destination) {
+            await handleSearchLocation("end");
+          }
         } catch (error) {
           console.error("Error finding address:", error);
           setFormData((prev) => ({
