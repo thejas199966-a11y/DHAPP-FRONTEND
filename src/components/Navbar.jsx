@@ -247,9 +247,9 @@ const Navbar = () => {
       <Toolbar>
         <DirectionsCarIcon sx={{ mr: 1 }} />
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          <Button color="inherit" component={Link} to="/">
+          <span onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
             DHire
-          </Button>
+          </span>
         </Typography>
 
         {isMobile ? renderMobileMenu() : renderDesktopMenu()}

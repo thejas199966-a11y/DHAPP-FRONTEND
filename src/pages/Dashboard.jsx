@@ -29,11 +29,11 @@ const Dashboard = () => {
   const items = [
     {
       img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=1000&q=80",
-      title: t("dashboard.luxury_travel"),
+      title: "dashboard.luxury_travel",
     },
     {
       img: "https://images.unsplash.com/photo-1533473359331-0135ef1bcfb0?auto=format&fit=crop&w=1000&q=80",
-      title: t("dashboard.safe_drivers"),
+      title: "dashboard.safe_drivers",
     },
   ];
 
