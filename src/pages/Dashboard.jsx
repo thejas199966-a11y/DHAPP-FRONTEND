@@ -13,9 +13,15 @@ import {
 import Carousel from "react-material-ui-carousel";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
+// --- Components ---
 import TripPlanner from "../components/TripPlanner";
 import AnimatedTravelButton from "../components/AnimatedTravelButton";
 import AnimatedDriverButton from "../components/AnimatedDriverButton";
+
+// --- Import Local Images ---
+import travelBanner from "../assets/images/dashboard_travel.png";
+import driverBanner from "../assets/images/dashboard_driver.png";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -26,13 +32,14 @@ const Dashboard = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Phones
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md")); // Tablets
 
+  // Use the imported local images here
   const items = [
     {
-      img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=1000&q=80",
+      img: travelBanner,
       title: "dashboard.luxury_travel",
     },
     {
-      img: "https://images.unsplash.com/photo-1533473359331-0135ef1bcfb0?auto=format&fit=crop&w=1000&q=80",
+      img: driverBanner,
       title: "dashboard.safe_drivers",
     },
   ];
@@ -108,7 +115,7 @@ const Dashboard = () => {
           sx={{ px: isMobile ? 2 : 0 }}
         >
           {/* xs={12} = Full width on Mobile
-             md={6} = Half width on Desktop/Tablet landscape
+              md={6} = Half width on Desktop/Tablet landscape
           */}
           <Grid item xs={12} md={6}>
             <AnimatedTravelButton
