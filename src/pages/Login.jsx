@@ -45,6 +45,7 @@ const Login = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   // Handle Role Toggle
   const handleRoleChange = (event, newRole) => {
@@ -125,7 +126,7 @@ const Login = () => {
   };
 
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={googleClientId}>
       <Box
         sx={{
           minHeight: "100vh",
