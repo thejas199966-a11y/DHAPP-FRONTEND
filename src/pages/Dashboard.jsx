@@ -29,11 +29,11 @@ const Dashboard = () => {
   const items = [
     {
       img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=1000&q=80",
-      title: "Luxury Travel",
+      title: t("dashboard.luxury_travel"),
     },
     {
       img: "https://images.unsplash.com/photo-1533473359331-0135ef1bcfb0?auto=format&fit=crop&w=1000&q=80",
-      title: "Safe Drivers",
+      title: t("dashboard.safe_drivers"),
     },
   ];
 
@@ -62,7 +62,7 @@ const Dashboard = () => {
                 // Height changes based on device: Mobile(250), Tablet(350), Desktop(450)
                 height={isMobile ? "250" : isTablet ? "350" : "450"}
                 image={item.img}
-                alt={item.title}
+                alt={t(item.title)}
                 sx={{ objectFit: "cover" }}
               />
               <Box
@@ -79,7 +79,7 @@ const Dashboard = () => {
                   variant={isMobile ? "h6" : "h4"} // Smaller font on mobile
                   sx={{ color: "white", fontWeight: "bold" }}
                 >
-                  {item.title}
+                  {t(item.title)}
                 </Typography>
               </Box>
             </Box>

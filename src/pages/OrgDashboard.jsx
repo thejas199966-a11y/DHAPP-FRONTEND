@@ -18,28 +18,30 @@ import {
 import BusinessIcon from "@mui/icons-material/Business";
 import GroupIcon from "@mui/icons-material/Group";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import { useTranslation } from "react-i18next";
 
 const OrgDashboard = () => {
+  const { t } = useTranslation();
   // Mock Fleet Data
   const fleet = [
     {
       id: "KA01AB1234",
       driver: "Ramesh Kumar",
       car: "Toyota Etios",
-      status: "On Trip",
+      status: "org_dashboard.status_on_trip",
     },
     {
       id: "KA05XY9876",
       driver: "Suresh V",
       car: "Maruti Dzire",
-      status: "Available",
+      status: "org_dashboard.status_available",
     },
     {
       id: "KA53MN4567",
-      driver: "Unassigned",
+      driver: t("org_dashboard.unassigned"),
       car: "Innova Crysta",
-      status: "Maintenance",
-    }
+      status: "org_dashboard.status_maintenance",
+    },
   ];
 
   return (
@@ -51,7 +53,7 @@ const OrgDashboard = () => {
             Alpha Travels
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Organisation Dashboard
+            {t("org_dashboard.title")}
           </Typography>
         </Box>
       </Box>
@@ -62,7 +64,7 @@ const OrgDashboard = () => {
           <Card sx={{ borderLeft: "5px solid #1976d2" }}>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
-                Total Vehicles
+                {t("org_dashboard.total_vehicles")}
               </Typography>
               <Typography variant="h3" fontWeight="bold">
                 12
@@ -74,7 +76,7 @@ const OrgDashboard = () => {
           <Card sx={{ borderLeft: "5px solid #2e7d32" }}>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
-                Active Trips
+                {t("org_dashboard.active_trips")}
               </Typography>
               <Typography variant="h3" fontWeight="bold">
                 5
@@ -86,7 +88,7 @@ const OrgDashboard = () => {
           <Card sx={{ borderLeft: "5px solid #ed6c02" }}>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
-                Drivers Online
+                {t("org_dashboard.drivers_online")}
               </Typography>
               <Typography variant="h3" fontWeight="bold">
                 8
@@ -98,7 +100,7 @@ const OrgDashboard = () => {
 
       {/* --- FLEET TABLE --- */}
       <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mt: 2 }}>
-        Live Fleet Status
+        {t("org_dashboard.live_fleet_status")}
       </Typography>
       <Box sx={{ overflowX: "auto" }}>
         <TableContainer component={Paper} elevation={2}>
@@ -106,16 +108,16 @@ const OrgDashboard = () => {
             <TableHead sx={{ bgcolor: "#f5f5f5" }}>
               <TableRow>
                 <TableCell>
-                  <strong>Vehicle No</strong>
+                  <strong>{t("org_dashboard.vehicle_no")}</strong>
                 </TableCell>
                 <TableCell>
-                  <strong>Driver</strong>
+                  <strong>{t("org_dashboard.driver")}</strong>
                 </TableCell>
                 <TableCell>
-                  <strong>Car Model</strong>
+                  <strong>{t("org_dashboard.car_model")}</strong>
                 </TableCell>
                 <TableCell>
-                  <strong>Status</strong>
+                  <strong>{t("org_dashboard.status")}</strong>
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -132,11 +134,11 @@ const OrgDashboard = () => {
                   <TableCell>{item.car}</TableCell>
                   <TableCell>
                     <Chip
-                      label={item.status}
+                      label={t(item.status)}
                       color={
-                        item.status === "Available"
+                        item.status === "org_dashboard.status_available"
                           ? "success"
-                          : item.status === "On Trip"
+                          : item.status === "org_dashboard.status_on_trip"
                           ? "primary"
                           : "warning"
                       }

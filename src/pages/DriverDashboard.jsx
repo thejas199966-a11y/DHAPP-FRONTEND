@@ -19,8 +19,10 @@ import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import NavigationIcon from "@mui/icons-material/Navigation";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import HistoryIcon from "@mui/icons-material/History";
+import { useTranslation } from "react-i18next";
 
 const DriverDashboard = () => {
+  const { t } = useTranslation();
   const [isOnline, setIsOnline] = useState(false);
 
   // Mock Data for "Real-time" feel
@@ -62,12 +64,14 @@ const DriverDashboard = () => {
         >
           <Box>
             <Typography variant="h5" fontWeight="bold">
-              {isOnline ? "YOU ARE ONLINE" : "YOU ARE OFFLINE"}
+              {isOnline
+                ? t("driver_dashboard.online_status")
+                : t("driver_dashboard.offline_status")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {isOnline
-                ? "Receiving ride requests..."
-                : "Go online to start earning"}
+                ? t("driver_dashboard.receiving_requests")
+                : t("driver_dashboard.go_online_prompt")}
             </Typography>
           </Box>
           <Switch
@@ -89,7 +93,9 @@ const DriverDashboard = () => {
               <Typography variant="h4" fontWeight="bold">
                 ₹1,270
               </Typography>
-              <Typography variant="caption">Today's Earnings</Typography>
+              <Typography variant="caption">
+                {t("driver_dashboard.todays_earnings")}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -100,7 +106,9 @@ const DriverDashboard = () => {
               <Typography variant="h4" fontWeight="bold">
                 4
               </Typography>
-              <Typography variant="caption">Rides Completed</Typography>
+              <Typography variant="caption">
+                {t("driver_dashboard.rides_completed")}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -113,7 +121,8 @@ const DriverDashboard = () => {
         gutterBottom
         sx={{ display: "flex", alignItems: "center" }}
       >
-        <HistoryIcon sx={{ mr: 1 }} /> Recent Activity
+        <HistoryIcon sx={{ mr: 1 }} />{" "}
+        {t("driver_dashboard.recent_activity")}
       </Typography>
 
       <Card>
@@ -138,7 +147,7 @@ const DriverDashboard = () => {
                   {ride.fare}
                 </Typography>
                 <Chip
-                  label={ride.status}
+                  label={t("driver_dashboard.ride_status_completed")}
                   size="small"
                   color="success"
                   variant="outlined"
@@ -152,7 +161,7 @@ const DriverDashboard = () => {
       {/* Floating Action Button logic for Mobile */}
       <Box sx={{ textAlign: "center", mt: 4 }}>
         <Button variant="outlined" startIcon={<HistoryIcon />}>
-          View Full History
+          {t("driver_dashboard.view_full_history_button")}
         </Button>
       </Box>
     </Container>

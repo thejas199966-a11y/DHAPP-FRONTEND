@@ -36,8 +36,10 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDrivers } from "../features/driverSlice"; // Ensure this matches your slice path
 import { showNotification } from "../features/notificationSlice";
+import { useTranslation } from "react-i18next";
 
 export default function BookDriver() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
 
   // 1. Get Data from Redux
@@ -88,7 +90,12 @@ export default function BookDriver() {
 
   const handleBookNow = (driverId) => {
     console.log(`Booking initiated for Driver ID: ${driverId}`);
-    dispatch(showNotification({ message: "Booking Feature coming in next module!", severity: "info" }));
+    dispatch(
+      showNotification({
+        message: t("book_driver.booking_notification"),
+        severity: "info",
+      })
+    );
   };
 
 
@@ -153,15 +160,14 @@ export default function BookDriver() {
           gutterBottom
           color="primary.main"
         >
-          Meet Our Drivers
+          {t("book_driver.title")}
         </Typography>
         <Typography
           variant="h6"
           color="text.secondary"
           sx={{ maxWidth: 600, mx: "auto" }}
         >
-          Professional, verified, and ready to drive you safely to your
-          destination.
+          {t("book_driver.subtitle")}
         </Typography>
       </Box>
 
@@ -176,7 +182,7 @@ export default function BookDriver() {
             <TextField
               fullWidth
               variant="outlined"
-              placeholder="Search by name..."
+              placeholder={t("book_driver.search_placeholder")}
               size="small"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -194,17 +200,17 @@ export default function BookDriver() {
           {/* Filter Dropdown */}
           <Grid item xs={6} md={3}>
             <FormControl fullWidth size="small" sx={{ bgcolor: "white" }}>
-              <InputLabel>Vehicle Type</InputLabel>
+              <InputLabel>{t("book_driver.vehicle_type_label")}</InputLabel>
               <Select
                 value={filterType}
-                label="Vehicle Type"
+                label={t("book_driver.vehicle_type_label")}
                 onChange={(e) => setFilterType(e.target.value)}
               >
-                <MenuItem value="ALL">All Types</MenuItem>
-                <MenuItem value="SEDAN">Sedan</MenuItem>
-                <MenuItem value="SUV">SUV</MenuItem>
-                <MenuItem value="HATCHBACK">Hatchback</MenuItem>
-                <MenuItem value="LUXURY">Luxury</MenuItem>
+                <MenuItem value="ALL">{t("book_driver.all_types")}</MenuItem>
+                <MenuItem value="SEDAN">{t("book_driver.sedan")}</MenuItem>
+                <MenuItem value="SUV">{t("book_driver.suv")}</MenuItem>
+                <MenuItem value="HATCHBACK">{t("book_driver.hatchback")}</MenuItem>
+                <MenuItem value="LUXURY">{t("book_driver.luxury")}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -212,10 +218,10 @@ export default function BookDriver() {
           {/* Sort Dropdown */}
           <Grid item xs={6} md={3}>
             <FormControl fullWidth size="small" sx={{ bgcolor: "white" }}>
-              <InputLabel>Sort By</InputLabel>
+              <InputLabel>{t("book_driver.sort_by_label")}</InputLabel>
               <Select
                 value={sortBy}
-                label="Sort By"
+                label={t("book_driver.sort_by_label")}
                 onChange={(e) => setSortBy(e.target.value)}
                 startAdornment={
                   <InputAdornment position="start">
@@ -223,8 +229,8 @@ export default function BookDriver() {
                   </InputAdornment>
                 }
               >
-                <MenuItem value="rating">Highest Rated</MenuItem>
-                <MenuItem value="experience">Most Experienced</MenuItem>
+                <MenuItem value="rating">{t("book_driver.highest_rated")}</MenuItem>
+                <MenuItem value="experience">{t("book_driver.most_experienced")}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -315,14 +321,16 @@ export default function BookDriver() {
                     >
                       <Chip
                         icon={<VerifiedUserIcon />}
-                        label="Verified"
+                        label={t("book_driver.verified")}
                         size="small"
                         color="success"
                         variant="outlined"
                       />
                       <Chip
                         icon={<WorkHistoryIcon />}
-                        label={`${driver.experience_years || 3}+ Yrs`}
+                        label={`${driver.experience_years || 3}+ ${t(
+                          "book_driver.years_abbr"
+                        )}`}
                         size="small"
                         color="primary"
                         variant="outlined"
@@ -360,8 +368,8 @@ export default function BookDriver() {
                         fontWeight="bold"
                       >
                         {driver.status === "busy"
-                          ? "Currently On Trip"
-                          : "Available Now"}
+                          ? t("book_driver.status_on_trip")
+                          : t("book_driver.status_available")}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -381,7 +389,9 @@ export default function BookDriver() {
                         py: 1,
                       }}
                     >
-                      {driver.status === "busy" ? "Unavailable" : "Book Driver"}
+                      {driver.status === "busy"
+                        ? t("book_driver.status_unavailable")
+                        : t("book_driver.book_driver_button")}
                     </Button>
                   </Box>
                 </Card>
@@ -393,7 +403,7 @@ export default function BookDriver() {
           <Grid item xs={12}>
             <Box sx={{ textAlign: "center", py: 8 }}>
               <Typography variant="h6" color="text.secondary">
-                No drivers found matching your criteria.
+                {t("book_driver.no_drivers_found")}
               </Typography>
               <Button
                 sx={{ mt: 2 }}
@@ -402,7 +412,7 @@ export default function BookDriver() {
                   setFilterType("ALL");
                 }}
               >
-                Clear Filters
+                {t("book_driver.clear_filters_button")}
               </Button>
             </Box>
           </Grid>

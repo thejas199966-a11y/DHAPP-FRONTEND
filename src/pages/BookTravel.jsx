@@ -34,8 +34,10 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTrips } from "../features/travelSlice";
 import { showNotification } from "../features/notificationSlice";
+import { useTranslation } from "react-i18next";
 
 export default function BookTravel() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
 
   // 1. Get Data from Redux
@@ -79,7 +81,7 @@ export default function BookTravel() {
 
   const handleBookTrip = (tripId) => {
     console.log(`Booking initiated for Trip ID: ${tripId}`);
-    dispatch(showNotification({ message: "Trip booking feature coming soon!", severity: "info" }));
+    dispatch(showNotification({ message: t("book_travel.booking_notification"), severity: "info" }));
   };
 
   // Skeleton Loader (Matches Card Layout)
@@ -109,10 +111,10 @@ export default function BookTravel() {
       {/* --- HEADER SECTION --- */}
       <Box sx={{ mb: 5, textAlign: "center" }}>
         <Typography variant="h3" fontWeight="800" gutterBottom color="primary.main">
-          Find Your Next Trip
+          {t("book_travel.title")}
         </Typography>
         <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: "auto" }}>
-          Explore shared taxi trips and book your seat with professional drivers.
+          {t("book_travel.subtitle")}
         </Typography>
       </Box>
 
@@ -120,18 +122,18 @@ export default function BookTravel() {
       <Paper elevation={2} sx={{ p: 2, mb: 4, borderRadius: 3, bgcolor: "#f8f9fa" }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
-            <TextField fullWidth variant="outlined" placeholder="From (e.g., Bangalore)" size="small" value={source} onChange={(e) => setSource(e.target.value)} InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>), }} sx={{ bgcolor: "white" }} />
+            <TextField fullWidth variant="outlined" placeholder={t("book_travel.from_placeholder")} size="small" value={source} onChange={(e) => setSource(e.target.value)} InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>), }} sx={{ bgcolor: "white" }} />
           </Grid>
           <Grid item xs={12} md={4}>
-            <TextField fullWidth variant="outlined" placeholder="To (e.g., Mysore)" size="small" value={destination} onChange={(e) => setDestination(e.target.value)} InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>), }} sx={{ bgcolor: "white" }} />
+            <TextField fullWidth variant="outlined" placeholder={t("book_travel.to_placeholder")} size="small" value={destination} onChange={(e) => setDestination(e.target.value)} InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>), }} sx={{ bgcolor: "white" }} />
           </Grid>
           <Grid item xs={12} md={4}>
             <FormControl fullWidth size="small" sx={{ bgcolor: "white" }}>
-              <InputLabel>Sort By</InputLabel>
-              <Select value={sortBy} label="Sort By" onChange={(e) => setSortBy(e.target.value)} startAdornment={<InputAdornment position="start"><FilterListIcon fontSize="small" /></InputAdornment>}>
-                <MenuItem value="price_asc">Price: Low to High</MenuItem>
-                <MenuItem value="price_desc">Price: High to Low</MenuItem>
-                <MenuItem value="rating">Driver Rating</MenuItem>
+              <InputLabel>{t("book_travel.sort_by_label")}</InputLabel>
+              <Select value={sortBy} label={t("book_travel.sort_by_label")} onChange={(e) => setSortBy(e.target.value)} startAdornment={<InputAdornment position="start"><FilterListIcon fontSize="small" /></InputAdornment>}>
+                <MenuItem value="price_asc">{t("book_travel.price_asc")}</MenuItem>
+                <MenuItem value="price_desc">{t("book_travel.price_desc")}</MenuItem>
+                <MenuItem value="rating">{t("book_travel.driver_rating")}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -158,47 +160,46 @@ export default function BookTravel() {
                          {trip.price.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 })}
                        </Typography>
                     </Box>
-                    <Chip icon={<DirectionsCarIcon />} label={trip.vehicle_type} size="small" variant="outlined" color="info" />
-                     <Chip label={`${trip.available_seats} seats left`} size="small" variant="outlined" color={trip.status === 'full' ? 'error': 'success'} sx={{ ml: 1 }} />
-                  </CardContent>
-                  <Box sx={{ p: 2, pt: 0, borderTop: '1px solid #eee', mt: 'auto' }}>
-                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Avatar sx={{ width: 40, height: 40, bgcolor: "#e3f2fd", color: "#1976d2", mr: 1.5 }}>
-                                <PersonIcon />
-                            </Avatar>
-                            <Box>
-                                <Typography variant="body2" fontWeight="bold">{trip.driver_name}</Typography>
-                                <Box display="flex" alignItems="center">
-                                    <StarIcon sx={{ color: "#ffb400", fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="body2">{trip.driver_rating}</Typography>
+                                        <Chip icon={<DirectionsCarIcon />} label={trip.vehicle_type} size="small" variant="outlined" color="info" />
+                                         <Chip label={`${trip.available_seats} ${t("book_travel.seats_left")}`} size="small" variant="outlined" color={trip.status === 'full' ? 'error': 'success'} sx={{ ml: 1 }} />
+                                      </CardContent>
+                                      <Box sx={{ p: 2, pt: 0, borderTop: '1px solid #eee', mt: 'auto' }}>
+                                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <Avatar sx={{ width: 40, height: 40, bgcolor: "#e3f2fd", color: "#1976d2", mr: 1.5 }}>
+                                                    <PersonIcon />
+                                                </Avatar>
+                                                <Box>
+                                                    <Typography variant="body2" fontWeight="bold">{trip.driver_name}</Typography>
+                                                    <Box display="flex" alignItems="center">
+                                                        <StarIcon sx={{ color: "#ffb400", fontSize: 16, mr: 0.5 }} />
+                                                        <Typography variant="body2">{trip.driver_rating}</Typography>
+                                                    </Box>
+                                                </Box>
+                                            </Box>
+                                            <Button variant="contained" disableElevation disabled={trip.status === 'full'} onClick={() => handleBookTrip(trip.id)} sx={{ borderRadius: 2, textTransform: 'none' }}>
+                                                 {trip.status === 'full' ? t("book_travel.full") : t("book_travel.book_seat_button")}
+                                            </Button>
+                                         </Box>
+                                      </Box>
+                                    </Card>
+                                  </Grid>
+                                ))}
+                    
+                            {/* Empty State */}
+                            {status === "succeeded" && filteredTrips.length === 0 && (
+                              <Grid item xs={12}>
+                                <Box sx={{ textAlign: "center", py: 8 }}>
+                                  <Typography variant="h6" color="text.secondary">
+                                    {t("book_travel.no_trips_found")}
+                                  </Typography>
+                                  <Button sx={{ mt: 2 }} onClick={() => { setSource(""); setDestination(""); }}>
+                                    {t("book_travel.clear_search_button")}
+                                  </Button>
                                 </Box>
-                            </Box>
-                        </Box>
-                        <Button variant="contained" disableElevation disabled={trip.status === 'full'} onClick={() => handleBookTrip(trip.id)} sx={{ borderRadius: 2, textTransform: 'none' }}>
-                             {trip.status === 'full' ? 'Full' : 'Book Seat'}
-                        </Button>
-                     </Box>
-                  </Box>
-                </Card>
-              </Grid>
-            ))}
-
-        {/* Empty State */}
-        {status === "succeeded" && filteredTrips.length === 0 && (
-          <Grid item xs={12}>
-            <Box sx={{ textAlign: "center", py: 8 }}>
-              <Typography variant="h6" color="text.secondary">
-                No trips found for the selected locations.
-              </Typography>
-              <Button sx={{ mt: 2 }} onClick={() => { setSource(""); setDestination(""); }}>
-                Clear Search
-              </Button>
-            </Box>
-          </Grid>
-        )}
-      </Grid>
-
+                              </Grid>
+                            )}
+                          </Grid>
       {/* --- PAGINATION --- */}
       {filteredTrips.length > 0 && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>

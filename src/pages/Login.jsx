@@ -29,8 +29,10 @@ import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import BusinessIcon from "@mui/icons-material/Business";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
+  const { t } = useTranslation();
   const [isSignup, setIsSignup] = useState(false);
   const [role, setRole] = useState("user"); // 'user' | 'driver' | 'organisation'
   const [showPassword, setShowPassword] = useState(false);
@@ -83,16 +85,17 @@ const Login = () => {
     const hasLower = /[a-z]/.test(password);
     const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
-    if (length < 6) return { level: 0, text: "Very Weak", color: "error" };
+    if (length < 6)
+      return { level: 0, text: "login.very_weak", color: "error" };
     if (length >= 6 && length <= 10 && (!hasUpper || !hasLower || !hasSpecial))
-      return { level: 1, text: "Weak", color: "warning" };
+      return { level: 1, text: "login.weak", color: "warning" };
     if (length >= 6 && length <= 10 && hasUpper && hasLower && hasSpecial)
-      return { level: 2, text: "Medium", color: "info" };
+      return { level: 2, text: "login.medium", color: "info" };
     if (length >= 11 && length <= 13 && hasUpper && hasLower && hasSpecial)
-      return { level: 3, text: "Strong", color: "success" };
+      return { level: 3, text: "login.strong", color: "success" };
     if (length > 13 && length <= 15 && hasLower && hasUpper && hasSpecial)
-      return { level: 4, text: "Very Strong", color: "success" };
-    return { level: 0, text: "Very Weak", color: "error" };
+      return { level: 4, text: "login.very_strong", color: "success" };
+    return { level: 0, text: "login.very_weak", color: "error" };
   };
 
   const passwordStrength = useMemo(
@@ -123,7 +126,9 @@ const Login = () => {
     } catch (err) {
       dispatch(
         showNotification({
-          message: "Error: " + (err.response?.data?.detail || "Login failed"),
+          message:
+            t("login.error_prefix") +
+            (err.response?.data?.detail || t("login.login_failed")),
           severity: "error",
         })
       );
@@ -171,27 +176,27 @@ const Login = () => {
             sx={{ mb: 3, width: "100%" }}
           >
             <ToggleButton value="user" sx={{ flex: 1 }}>
-              <PersonIcon sx={{ mr: 1 }} /> User
+              <PersonIcon sx={{ mr: 1 }} /> {t("login.user_role")}
             </ToggleButton>
             <ToggleButton value="driver" sx={{ flex: 1 }}>
-              <DirectionsCarIcon sx={{ mr: 1 }} /> Driver
+              <DirectionsCarIcon sx={{ mr: 1 }} /> {t("login.driver_role")}
             </ToggleButton>
             <ToggleButton value="organisation" sx={{ flex: 1 }}>
-              <BusinessIcon sx={{ mr: 1 }} /> Org
+              <BusinessIcon sx={{ mr: 1 }} /> {t("login.org_role")}
             </ToggleButton>
           </ToggleButtonGroup>
 
           <Typography variant="h5" sx={{ mb: 1, fontWeight: "bold" }}>
             {isSignup
-              ? `Create Account`
-              : `Login`}
+              ? t("login.create_account_title")
+              : t("login.login_title")}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             {role === "driver"
-              ? "Manage your rides and earnings"
+              ? t("login.driver_subtitle")
               : role === "organisation"
-              ? "Manage your fleet and drivers"
-              : "Book rides and travel packages"}
+              ? t("login.org_subtitle")
+              : t("login.user_subtitle")}
           </Typography>
 
           <form onSubmit={handleSubmit}>
@@ -201,7 +206,7 @@ const Login = () => {
                 {role !== "organisation" && (
                   <TextField
                     fullWidth
-                    label="Full Name"
+                    label={t("login.full_name_label")}
                     margin="normal"
                     onChange={(e) =>
                       setFormData({ ...formData, full_name: e.target.value })
@@ -214,7 +219,7 @@ const Login = () => {
                   <>
                     <TextField
                       fullWidth
-                      label="Organisation Name"
+                      label={t("login.org_name_label")}
                       margin="normal"
                       onChange={(e) =>
                         setFormData({ ...formData, org_name: e.target.value })
@@ -222,7 +227,7 @@ const Login = () => {
                     />
                     <TextField
                       fullWidth
-                      label="Contact Number"
+                      label={t("login.contact_number_label")}
                       margin="normal"
                       onChange={(e) =>
                         setFormData({
@@ -233,7 +238,7 @@ const Login = () => {
                     />
                     <TextField
                       fullWidth
-                      label="Address"
+                      label={t("login.address_label")}
                       margin="normal"
                       onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
@@ -247,7 +252,7 @@ const Login = () => {
                   <>
                     <TextField
                       fullWidth
-                      label="Phone Number"
+                      label={t("login.phone_number_label")}
                       margin="normal"
                       onChange={(e) =>
                         setFormData({
@@ -258,7 +263,7 @@ const Login = () => {
                     />
                     <TextField
                       fullWidth
-                      label="Driving License Number"
+                      label={t("login.license_number_label")}
                       margin="normal"
                       onChange={(e) =>
                         setFormData({
@@ -268,10 +273,10 @@ const Login = () => {
                       }
                     />
                     <FormControl fullWidth margin="normal">
-                      <InputLabel>Vehicle Type</InputLabel>
+                      <InputLabel>{t("login.vehicle_type_label")}</InputLabel>
                       <Select
                         value={formData.vehicle_type}
-                        label="Vehicle Type"
+                        label={t("login.vehicle_type_label")}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
@@ -279,10 +284,12 @@ const Login = () => {
                           })
                         }
                       >
-                        <MenuItem value="SEDAN">SEDAN</MenuItem>
-                        <MenuItem value="SUV">SUV</MenuItem>
-                        <MenuItem value="HATCHBACK">HATCHBACK</MenuItem>
-                        <MenuItem value="LUXURY">LUXURY</MenuItem>
+                        <MenuItem value="SEDAN">{t("login.sedan")}</MenuItem>
+                        <MenuItem value="SUV">{t("login.suv")}</MenuItem>
+                        <MenuItem value="HATCHBACK">
+                          {t("login.hatchback")}
+                        </MenuItem>
+                        <MenuItem value="LUXURY">{t("login.luxury")}</MenuItem>
                       </Select>
                     </FormControl>
                   </>
@@ -292,7 +299,11 @@ const Login = () => {
 
             <TextField
               fullWidth
-              label={role === "organisation" ? "Business Email" : "Email"}
+              label={
+                role === "organisation"
+                  ? t("login.business_email_label")
+                  : t("login.email_label")
+              }
               margin="normal"
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
@@ -301,7 +312,7 @@ const Login = () => {
 
             <TextField
               fullWidth
-              label="Password"
+              label={t("login.password_label")}
               type={showPassword ? "text" : "password"}
               inputRef={passwordRef}
               margin="normal"
@@ -323,7 +334,7 @@ const Login = () => {
                   </InputAdornment>
                 ),
               }}
-              helperText="Password must be 6-15 chars with uppercase, lowercase, special char"
+              helperText={t("login.password_helper")}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
@@ -341,7 +352,7 @@ const Login = () => {
                   variant="body2"
                   sx={{ mt: 0.5, textAlign: "center" }}
                 >
-                  {passwordStrength.text}
+                  {t(passwordStrength.text)}
                 </Typography>
               </Box>
             )}
@@ -353,14 +364,14 @@ const Login = () => {
               type="submit"
               sx={{ mt: 3, mb: 2 }}
             >
-              {isSignup ? "Sign Up" : "Login"}
+              {isSignup ? t("login.signup_button") : t("login.login_title")}
             </Button>
           </form>
 
           {/* Social Login only for 'user' role usually */}
           {role === "user" && (
             <>
-              <Divider sx={{ my: 2 }}>OR</Divider>
+              <Divider sx={{ my: 2 }}>{t("login.or_divider")}</Divider>
               <Box sx={{ display: "flex", justifyContent: "center" }}>
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
@@ -372,8 +383,8 @@ const Login = () => {
 
           <Button sx={{ mt: 2 }} onClick={() => setIsSignup(!isSignup)}>
             {isSignup
-              ? "Already have an account? Login"
-              : "Don't have an account? Sign Up"}
+              ? t("login.switch_to_login")
+              : t("login.switch_to_signup")}
           </Button>
         </Paper>
       </Box>
