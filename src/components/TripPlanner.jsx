@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Container,
   Grid,
@@ -104,64 +104,79 @@ export default function TripPlanner() {
   const [routePositions, setRoutePositions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const getPreciseLocation = () => {
-      if (!navigator.geolocation) {
-        dispatch(
-          showNotification({
-            message: "Geolocation is not supported by your browser",
-            severity: "error",
-          })
-        );
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-
-          const userCoords = { lat: latitude, lng: longitude };
-          setStartCoords(userCoords);
-          setMapCenter([latitude, longitude]);
-
-          try {
-            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
-            const res = await axios.get(url);
-            const exactAddress = res.data.display_name;
-
-            setFormData((prev) => ({
-              ...prev,
-              startPoint: exactAddress,
-            }));
-          } catch (error) {
-            console.error("Error finding address:", error);
-            setFormData((prev) => ({
-              ...prev,
-              startPoint: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-            }));
-          }
-          setLoading(false);
-        },
-        (error) => {
-          console.error("Location denied or error:", error);
-          if (currentLocation && currentLocation.coordinates) {
-            const { lat, lng } = currentLocation.coordinates;
-            setStartCoords({ lat, lng });
-            setMapCenter([lat, lng]);
-            setFormData((prev) => ({
-              ...prev,
-              startPoint: `${currentLocation.city}, ${currentLocation.state}`,
-            }));
-          }
-          setLoading(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  const getPreciseLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      dispatch(
+        showNotification({
+          message: "Geolocation is not supported by your browser",
+          severity: "error",
+        })
       );
-    };
+      setLoading(false);
+      return;
+    }
 
+    setLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const userCoords = { lat: latitude, lng: longitude };
+
+        setStartCoords(userCoords);
+        setMapCenter([latitude, longitude]);
+
+        try {
+          const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
+          const res = await axios.get(url);
+          const exactAddress = res.data.display_name;
+          setFormData((prev) => ({ ...prev, startPoint: exactAddress }));
+        } catch (error) {
+          console.error("Error finding address:", error);
+          setFormData((prev) => ({
+            ...prev,
+            startPoint: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+          }));
+        } finally {
+          setLoading(false);
+        }
+      },
+
+      (error) => {
+        console.error("Location denied or error:", error);
+        if (currentLocation && currentLocation.coordinates) {
+          const { lat, lng } = currentLocation.coordinates;
+          setStartCoords({ lat, lng });
+          setMapCenter([lat, lng]);
+          setFormData((prev) => ({
+            ...prev,
+            startPoint: `${currentLocation.city}, ${currentLocation.state}`,
+          }));
+        } else {
+          // Fallback to a default location (e.g., Delhi, India)
+          const defaultCoords = { lat: 28.7041, lng: 77.1025 };
+          setStartCoords(defaultCoords);
+          setMapCenter([defaultCoords.lat, defaultCoords.lng]);
+          setFormData((prev) => ({
+            ...prev,
+            startPoint: "Delhi, India",
+          }));
+
+          dispatch(
+            showNotification({
+              message: "Could not detect location. Defaulted to Delhi, India.",
+              severity: "info",
+            })
+          );
+        }
+
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, [dispatch, currentLocation]);
+
+  useEffect(() => {
     getPreciseLocation();
   }, []);
 

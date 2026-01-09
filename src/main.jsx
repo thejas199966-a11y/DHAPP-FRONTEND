@@ -8,7 +8,7 @@ import "./i18n";
 
 const LoadingMarkup = () => (
   <div style={{ textAlign: 'center', marginTop: '20%' }}>
-    <h2>Loading Language...</h2>
+    <h2>Loading Page...</h2>
   </div>
 );
 
