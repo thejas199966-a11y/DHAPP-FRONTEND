@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Paper,
   TextField,
@@ -13,6 +13,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
@@ -25,10 +27,20 @@ import axios from "axios";
 import PersonIcon from "@mui/icons-material/Person";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import BusinessIcon from "@mui/icons-material/Business";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 const Login = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [role, setRole] = useState("user"); // 'user' | 'driver' | 'organisation'
+  const [showPassword, setShowPassword] = useState(false);
+  const passwordRef = useRef(null);
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+  };
 
   const [formData, setFormData] = useState({
     email: "",
@@ -46,6 +58,17 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (passwordRef.current) {
+        const valueLength = passwordRef.current.value.length;
+        passwordRef.current.selectionStart = valueLength;
+        passwordRef.current.selectionEnd = valueLength;
+        passwordRef.current.focus();
+      }
+    }, 0);
+  }, [showPassword]);
 
   // Handle Role Toggle
   const handleRoleChange = (event, newRole) => {
@@ -93,8 +116,6 @@ const Login = () => {
         payload
       );
 
-      // IMPORTANT: Backend must return the role in 'user' object for this to work perfectly.
-      // If backend doesn't yet, the Dashboard logic below might need a temporary hardcode.
       dispatch(
         loginSuccess({ token: res.data.access_token, user: res.data.user })
       );
@@ -281,11 +302,26 @@ const Login = () => {
             <TextField
               fullWidth
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
+              inputRef={passwordRef}
               margin="normal"
               inputProps={{
                 maxLength: 15, // Hard limit for user typing
                 minLength: 6, // Good practice for minimum security
+              }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
               }}
               helperText="Password must be 6-15 chars with uppercase, lowercase, special char"
               onChange={(e) =>

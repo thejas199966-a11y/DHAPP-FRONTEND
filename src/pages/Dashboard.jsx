@@ -86,6 +86,7 @@ const Dashboard = () => {
         </Carousel>
       </Card>
 
+      {/* Trip Planner Component */}
       <TripPlanner />
 
       {/* 2. Action Buttons Section */}

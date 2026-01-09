@@ -87,6 +87,7 @@ const MapController = ({ center, routeBounds }) => {
 
 export default function TripPlanner() {
   const { location: currentLocation } = useSelector((state) => state.common);
+  const { tripData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
   const [formData, setFormData] = useState({
@@ -95,6 +96,7 @@ export default function TripPlanner() {
     startDate: "",
     endDate: "",
     travelers: 1,
+    ...tripData,
   });
 
   // Map State
@@ -180,6 +182,10 @@ export default function TripPlanner() {
     getPreciseLocation();
   }, []);
 
+  useEffect(() => {
+    dispatch(setTripData(formData));
+  }, [formData]);
+
   const fetchRoute = async (start, end) => {
     if (!start || !end) return;
     try {
@@ -207,7 +213,6 @@ export default function TripPlanner() {
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    dispatch(setTripData({ ...formData, [e.target.name]: e.target.value }));
   };
 
   const handleSearchLocation = async (type) => {
@@ -307,7 +312,8 @@ export default function TripPlanner() {
       maxWidth="xl"
       sx={{
         mt: 3,
-        mb: 3,
+        mb: 2,
+        ml: 2,
         height: "calc(100vh - 100px)",
         display: "flex",
         flexDirection: "column",
@@ -315,7 +321,7 @@ export default function TripPlanner() {
     >
       <Grid container spacing={2} sx={{ flexGrow: 1, height: "100%" }}>
         {/* --- LEFT PANEL: FORM --- */}
-        <Grid item xs={12} md={4} sx={{ height: "100%" }}>
+        <Grid item xs={12} md={4} sx={{ height: "70%" }}>
           <Paper elevation={3} sx={{ p: 3, height: "100%", overflowY: "auto" }}>
             {/* 3. CONDITIONAL RENDERING: SKELETON VS FORM */}
             {loading ? (
@@ -380,7 +386,7 @@ export default function TripPlanner() {
                   <NavigationIcon sx={{ mr: 1, color: "#1976d2" }} /> Plan Trip
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+                <Box sx={{ mt: 3 }}>
                   <TextField
                     fullWidth
                     label="Start Point"
@@ -463,16 +469,6 @@ export default function TripPlanner() {
                     onChange={handleInputChange}
                     inputProps={{ min: 1 }}
                   />
-
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    size="large"
-                    sx={{ mt: 4 }}
-                  >
-                    BOOK TRIP
-                  </Button>
                 </Box>
               </>
             )}
@@ -480,7 +476,7 @@ export default function TripPlanner() {
         </Grid>
 
         {/* --- RIGHT PANEL: MAP --- */}
-        <Grid item xs={12} md={8} sx={{ height: "100%", minWidth: "500px" }}>
+        <Grid item xs={12} md={8} sx={{ height: "70%", minWidth: "500px" }}>
           <Paper
             elevation={3}
             sx={{
