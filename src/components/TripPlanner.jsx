@@ -90,7 +90,6 @@ const MapController = ({ center, routeBounds }) => {
 export default function TripPlanner() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { location: currentLocation } = useSelector((state) => state.common);
   const { tripData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
@@ -153,41 +152,31 @@ export default function TripPlanner() {
 
       (error) => {
         console.error("Location denied or error:", error);
-        if (currentLocation && currentLocation.coordinates) {
-          const { lat, lng } = currentLocation.coordinates;
-          setStartCoords({ lat, lng });
-          setMapCenter([lat, lng]);
-          setFormData((prev) => ({
-            ...prev,
-            startPoint: `${currentLocation.city}, ${currentLocation.state}`,
-          }));
-        } else {
-          // Fallback to a default location (e.g., Delhi, India)
-          const defaultCoords = { lat: 28.7041, lng: 77.1025 };
-          setStartCoords(defaultCoords);
-          setMapCenter([defaultCoords.lat, defaultCoords.lng]);
-          setFormData((prev) => ({
-            ...prev,
-            startPoint: "Delhi, India",
-          }));
+        // Fallback to a default location (e.g., Bengaluru, India)
+        const defaultCoords = { lat: 12.9716, lng: 77.5946 };
+        setStartCoords(defaultCoords);
+        setMapCenter([defaultCoords.lat, defaultCoords.lng]);
+        setFormData((prev) => ({
+          ...prev,
+          startPoint: "Bengaluru, India",
+        }));
 
-          dispatch(
-            showNotification({
-              message: "Could not detect location. Defaulted to Delhi, India.",
-              severity: "info",
-            })
-          );
-        }
-
+        dispatch(
+          showNotification({
+            message:
+              "Could not detect location. Defaulted to Bengaluru, India.",
+            severity: "info",
+          })
+        );
         setLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [dispatch, currentLocation]);
+  }, [dispatch]);
 
   useEffect(() => {
     getPreciseLocation();
-  }, []);
+  }, [getPreciseLocation]);
 
   useEffect(() => {
     dispatch(setTripData(formData));
@@ -324,7 +313,11 @@ export default function TripPlanner() {
         px: isMobile ? 1 : 2,
       }}
     >
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+        sx={{ display: "flex", flexDirection: isMobile ? "column" : "row" }}
+      >
         {/* --- LEFT PANEL: FORM --- */}
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: isMobile ? 2 : 3 }}>
@@ -370,7 +363,7 @@ export default function TripPlanner() {
                 <Skeleton
                   variant="rectangular"
                   height={56}
-                  sx={{ mb: 4, borderRadius: 1 }}
+                  sx={{ mb: 3, borderRadius: 1 }}
                 />
 
                 {/* Button Skeleton */}
@@ -481,11 +474,11 @@ export default function TripPlanner() {
         </Grid>
 
         {/* --- RIGHT PANEL: MAP --- */}
-        <Grid item xs={12} md={8} sx={{ minWidth: "500px" }}>
+        <Grid item xs={12} md={8} sx={!isMobile ? { minWidth: "500px" } : {}}>
           <Paper
             elevation={3}
             sx={{
-              height: isMobile ? "70vh" : "70vh",
+              height: isMobile ? "50vh" : "60vh",
               width: "100%",
               borderRadius: 2,
               overflow: "hidden",
