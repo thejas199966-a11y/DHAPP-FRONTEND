@@ -1,0 +1,113 @@
+name: React Universal Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # -----------------------------------------------------------------
+  # JOB 1: BUILD & TEST (Updated for Legacy Peer Deps)
+  # -----------------------------------------------------------------
+  build-check:
+    name: ⚛️ Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        # UPDATED: Matches your Render build command to avoid errors
+        run: npm install --legacy-peer-deps
+
+      - name: Check Build
+        run: npm run build
+
+  # -----------------------------------------------------------------
+  # JOB 2: RENDER DEPLOY (Trigger Only)
+  # -----------------------------------------------------------------
+  deploy-render:
+    name: 🚀 Render Deploy
+    needs: build-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        if: env.DEPLOY_HOOK != ''
+        run: curl "$DEPLOY_HOOK"
+
+  # -----------------------------------------------------------------
+  # JOB 3: AWS S3 DEPLOY (Updated for Legacy Peer Deps)
+  # -----------------------------------------------------------------
+  deploy-aws:
+    name: 🔶 AWS S3 Deploy
+    needs: build-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for AWS Secrets
+        id: check-aws
+        run: |
+          if [ "${{ secrets.AWS_S3_BUCKET }}" == "" ]; then
+            echo "has_aws=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_aws=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout Code
+        if: steps.check-aws.outputs.has_aws == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        if: steps.check-aws.outputs.has_aws == 'true'
+        uses: actions/setup-node@v4
+        with:
+           node-version: '20'
+      
+      - name: Install & Build for AWS
+        if: steps.check-aws.outputs.has_aws == 'true'
+        # UPDATED: Added legacy-peer-deps here too
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
+      
+      - name: Configure AWS Credentials
+        if: steps.check-aws.outputs.has_aws == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # <--- Update if your bucket is not in us-east-1
+
+      - name: Sync to S3
+        if: steps.check-aws.outputs.has_aws == 'true'
+        # CHANGE './dist' to './build' if you are using Create-React-App
+        run: aws s3 sync ./dist s3://${{ secrets.AWS_S3_BUCKET }} --delete
+
+  # -----------------------------------------------------------------
+  # JOB 4: AZURE STATIC WEB APPS DEPLOY
+  # -----------------------------------------------------------------
+  deploy-azure:
+    name: 🔷 Azure Deploy
+    needs: build-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Azure Static Web Apps
+        env:
+          AZURE_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        if: env.AZURE_TOKEN != ''
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/"
+          output_location: "dist" 
+          # Note: Azure attempts to auto-detect settings. 
+          # If Azure fails, you may need to add 'skip_app_build: true' 
+          # and build it manually in a previous step like we did for AWS.
