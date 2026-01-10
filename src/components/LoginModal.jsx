@@ -209,7 +209,7 @@ const LoginModal = () => {
         open={isLoginModalOpen}
         closeAfterTransition
         hideBackdrop
-        sx={{ overflowY: "auto", bgcolor: "#f0f2f5" }}
+        sx={{ overflowY: "auto", bgcolor: "background.default" }}
       >
         <div>
           <IconButton
@@ -220,6 +220,7 @@ const LoginModal = () => {
               top: 16,
               right: 16,
               zIndex: 1301, // z-index of modal is 1300
+              color: "text.primary",
             }}
             disabled={loading}
           >
