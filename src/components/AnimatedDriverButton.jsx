@@ -179,6 +179,7 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
     setIsAnimating(true);
     setTimeout(() => {
       navigate("/book-driver");
+      setIsAnimating(false);
     }, 2000);
   };
 

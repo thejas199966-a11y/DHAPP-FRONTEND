@@ -145,13 +145,13 @@ export default function TripPlanner() {
     startDate: "",
     endDate: "",
     travelers: 1,
+    startCoords: null,
+    endCoords: null,
     ...tripData,
   });
 
   // Map State
   const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
-  const [startCoords, setStartCoords] = useState(null);
-  const [endCoords, setEndCoords] = useState(null);
   const [routePositions, setRoutePositions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -173,15 +173,17 @@ export default function TripPlanner() {
       async (position) => {
         const { latitude, longitude } = position.coords;
         const userCoords = { lat: latitude, lng: longitude };
-
-        setStartCoords(userCoords);
         setMapCenter([latitude, longitude]);
 
         try {
           const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
           const res = await axios.get(url);
           const exactAddress = res.data.display_name;
-          setFormData((prev) => ({ ...prev, startPoint: exactAddress }));
+          setFormData((prev) => ({
+            ...prev,
+            startCoords: userCoords,
+            startPoint: exactAddress,
+          }));
           if (formData.destination) {
             await handleSearchLocation("end");
           }
@@ -189,24 +191,22 @@ export default function TripPlanner() {
           console.error("Error finding address:", error);
           setFormData((prev) => ({
             ...prev,
+            startCoords: userCoords,
             startPoint: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
           }));
         } finally {
           setLoading(false);
         }
       },
-
       (error) => {
         console.error("Location denied or error:", error);
-        // Fallback to a default location (e.g., Bengaluru, India)
         const defaultCoords = { lat: 12.9716, lng: 77.5946 };
-        setStartCoords(defaultCoords);
         setMapCenter([defaultCoords.lat, defaultCoords.lng]);
         setFormData((prev) => ({
           ...prev,
+          startCoords: defaultCoords,
           startPoint: "Bengaluru, India",
         }));
-
         dispatch(
           showNotification({
             message:
@@ -218,7 +218,7 @@ export default function TripPlanner() {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [dispatch]);
+  }, [dispatch, formData.destination]);
 
   useEffect(() => {
     getPreciseLocation();
@@ -246,12 +246,12 @@ export default function TripPlanner() {
   };
 
   useEffect(() => {
-    if (startCoords && endCoords) {
-      fetchRoute(startCoords, endCoords);
+    if (formData.startCoords && formData.endCoords) {
+      fetchRoute(formData.startCoords, formData.endCoords);
     } else {
       setRoutePositions([]);
     }
-  }, [startCoords, endCoords]);
+  }, [formData.startCoords, formData.endCoords]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -270,10 +270,10 @@ export default function TripPlanner() {
         const newCoords = { lat: parseFloat(lat), lng: parseFloat(lon) };
 
         if (type === "start") {
-          setStartCoords(newCoords);
+          setFormData((prev) => ({ ...prev, startCoords: newCoords }));
           setMapCenter([newCoords.lat, newCoords.lng]);
         } else {
-          setEndCoords(newCoords);
+          setFormData((prev) => ({ ...prev, endCoords: newCoords }));
         }
       } else {
         dispatch(
@@ -295,19 +295,33 @@ export default function TripPlanner() {
 
   const handleMarkerDrag = async (e, type) => {
     const { lat, lng } = e.target.getLatLng();
-    if (type === "start") setStartCoords({ lat, lng });
-    else setEndCoords({ lat, lng });
+    const newCoords = { lat, lng };
 
     try {
       const res = await axios.get(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
       );
       const address = res.data.display_name;
-      if (type === "start")
-        setFormData((prev) => ({ ...prev, startPoint: address }));
-      else setFormData((prev) => ({ ...prev, destination: address }));
+      if (type === "start") {
+        setFormData((prev) => ({
+          ...prev,
+          startCoords: newCoords,
+          startPoint: address,
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          endCoords: newCoords,
+          destination: address,
+        }));
+      }
     } catch (error) {
       console.error("Reverse Geocode Error", error);
+      if (type === "start") {
+        setFormData((prev) => ({ ...prev, startCoords: newCoords }));
+      } else {
+        setFormData((prev) => ({ ...prev, endCoords: newCoords }));
+      }
     }
   };
 
@@ -337,7 +351,7 @@ export default function TripPlanner() {
 
     if (invalidForm) return;
 
-    if (!startCoords || !endCoords) {
+    if (!formData.startCoords || !formData.endCoords) {
       dispatch(
         showNotification({
           message:
@@ -567,8 +581,8 @@ export default function TripPlanner() {
 
                   <RecenterControl
                     mapCenter={mapCenter}
-                    startCoords={startCoords}
-                    endCoords={endCoords}
+                    startCoords={formData.startCoords}
+                    endCoords={formData.endCoords}
                     routePositions={routePositions}
                   />
 
@@ -581,9 +595,12 @@ export default function TripPlanner() {
                     />
                   )}
 
-                  {startCoords && (
+                  {formData.startCoords && (
                     <Marker
-                      position={[startCoords.lat, startCoords.lng]}
+                      position={[
+                        formData.startCoords.lat,
+                        formData.startCoords.lng,
+                      ]}
                       draggable={true}
                       eventHandlers={onStartDrag}
                       icon={greenIcon}
@@ -591,9 +608,12 @@ export default function TripPlanner() {
                       <Popup>Start</Popup>
                     </Marker>
                   )}
-                  {endCoords && (
+                  {formData.endCoords && (
                     <Marker
-                      position={[endCoords.lat, endCoords.lng]}
+                      position={[
+                        formData.endCoords.lat,
+                        formData.endCoords.lng,
+                      ]}
                       draggable={true}
                       eventHandlers={onEndDrag}
                       icon={redIcon}

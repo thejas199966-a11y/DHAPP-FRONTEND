@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Button, Typography, Box } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { keyframes } from "@emotion/react";
+import { showNotification } from "../features/notificationSlice";
 
 // --- 1. Define Animations ---
 
@@ -237,13 +238,58 @@ const MountainIcon = ({ isNight }) => {
 const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { mode } = useSelector((state) => state.theme);
+  const { tripData } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const isNight = mode === "dark";
+
+  const validateTripData = () => {
+    if (Object.keys(tripData || {}).length === 0) {
+      dispatch(
+        showNotification({
+          message: "Please fill in the required fields.",
+          severity: "warning",
+        })
+      );
+      return;
+    }
+    const invalidForm = Object.entries(tripData || {}).some(([key, value]) => {
+      if (!value) {
+        dispatch(
+          showNotification({
+            message: `Please fill in the ${key} field.`,
+            severity: "warning",
+          })
+        );
+        return true;
+      }
+      return false;
+    });
+
+    if (invalidForm) return;
+
+    if (!tripData.startCoords || !tripData.endCoords) {
+      dispatch(
+        showNotification({
+          message:
+            "Please ensure both start point and destination are set correctly.",
+          severity: "warning",
+        })
+      );
+      return;
+    }
+
+    return true;
+  };
 
   const handleClick = () => {
     if (isAnimating) return;
+
+    if (!validateTripData()) return;
+
     setIsAnimating(true);
     setTimeout(() => {
       navigate("/book-travel");
+      setIsAnimating(false);
     }, 2000);
   };
 
@@ -302,7 +348,7 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
           mt: 0.5,
           zIndex: 20,
           opacity: isAnimating ? 0 : 1,
-          color: "text.primary"
+          color: "text.primary",
         }}
       />
 
