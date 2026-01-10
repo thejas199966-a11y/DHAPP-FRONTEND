@@ -15,6 +15,7 @@ import {
   MenuItem,
   InputAdornment,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
@@ -36,6 +37,7 @@ const Login = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [role, setRole] = useState("user"); // 'user' | 'driver' | 'organisation'
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const passwordRef = useRef(null);
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -105,8 +107,9 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // In real app, endpoint changes based on role, or payload includes role
-    // For now, we simulate success for UI demo purposes
+    if (loading) return;
+
+    setLoading(true);
 
     const endpoint = isSignup ? "/auth/signup" : "/auth/login";
 
@@ -132,10 +135,13 @@ const Login = () => {
           severity: "error",
         })
       );
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/auth/google?token=${
@@ -148,7 +154,14 @@ const Login = () => {
       navigate("/");
     } catch (err) {
       console.error("Google Login Error", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleGoogleError = () => {
+    console.log("Login Failed");
+    setLoading(false);
   };
 
   return (
@@ -174,14 +187,19 @@ const Login = () => {
             aria-label="User Role"
             color="primary"
             sx={{ mb: 3, width: "100%" }}
+            disabled={loading}
           >
-            <ToggleButton value="user" sx={{ flex: 1 }}>
+            <ToggleButton value="user" sx={{ flex: 1 }} disabled={loading}>
               <PersonIcon sx={{ mr: 1 }} /> {t("login.user_role")}
             </ToggleButton>
-            <ToggleButton value="driver" sx={{ flex: 1 }}>
+            <ToggleButton value="driver" sx={{ flex: 1 }} disabled={loading}>
               <DirectionsCarIcon sx={{ mr: 1 }} /> {t("login.driver_role")}
             </ToggleButton>
-            <ToggleButton value="organisation" sx={{ flex: 1 }}>
+            <ToggleButton
+              value="organisation"
+              sx={{ flex: 1 }}
+              disabled={loading}
+            >
               <BusinessIcon sx={{ mr: 1 }} /> {t("login.org_role")}
             </ToggleButton>
           </ToggleButtonGroup>
@@ -208,6 +226,7 @@ const Login = () => {
                     fullWidth
                     label={t("login.full_name_label")}
                     margin="normal"
+                    disabled={loading}
                     onChange={(e) =>
                       setFormData({ ...formData, full_name: e.target.value })
                     }
@@ -221,6 +240,7 @@ const Login = () => {
                       fullWidth
                       label={t("login.org_name_label")}
                       margin="normal"
+                      disabled={loading}
                       onChange={(e) =>
                         setFormData({ ...formData, org_name: e.target.value })
                       }
@@ -229,6 +249,7 @@ const Login = () => {
                       fullWidth
                       label={t("login.contact_number_label")}
                       margin="normal"
+                      disabled={loading}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -240,6 +261,7 @@ const Login = () => {
                       fullWidth
                       label={t("login.address_label")}
                       margin="normal"
+                      disabled={loading}
                       onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
                       }
@@ -254,6 +276,7 @@ const Login = () => {
                       fullWidth
                       label={t("login.phone_number_label")}
                       margin="normal"
+                      disabled={loading}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -265,6 +288,7 @@ const Login = () => {
                       fullWidth
                       label={t("login.license_number_label")}
                       margin="normal"
+                      disabled={loading}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -272,7 +296,7 @@ const Login = () => {
                         })
                       }
                     />
-                    <FormControl fullWidth margin="normal">
+                    <FormControl fullWidth margin="normal" disabled={loading}>
                       <InputLabel>{t("login.vehicle_type_label")}</InputLabel>
                       <Select
                         value={formData.vehicle_type}
@@ -283,6 +307,7 @@ const Login = () => {
                             vehicle_type: e.target.value,
                           })
                         }
+                        disabled={loading}
                       >
                         <MenuItem value="SEDAN">{t("login.sedan")}</MenuItem>
                         <MenuItem value="SUV">{t("login.suv")}</MenuItem>
@@ -305,6 +330,7 @@ const Login = () => {
                   : t("login.email_label")
               }
               margin="normal"
+              disabled={loading}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
@@ -316,6 +342,7 @@ const Login = () => {
               type={showPassword ? "text" : "password"}
               inputRef={passwordRef}
               margin="normal"
+              disabled={loading}
               inputProps={{
                 maxLength: 15, // Hard limit for user typing
                 minLength: 6, // Good practice for minimum security
@@ -328,6 +355,7 @@ const Login = () => {
                       onClick={handleClickShowPassword}
                       onMouseDown={handleMouseDownPassword}
                       edge="end"
+                      disabled={loading}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -363,8 +391,15 @@ const Login = () => {
               size="large"
               type="submit"
               sx={{ mt: 3, mb: 2 }}
+              disabled={loading}
             >
-              {isSignup ? t("login.signup_button") : t("login.login_title")}
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : isSignup ? (
+                t("login.signup_button")
+              ) : (
+                t("login.login_title")
+              )}
             </Button>
           </form>
 
@@ -372,16 +407,27 @@ const Login = () => {
           {role === "user" && (
             <>
               <Divider sx={{ my: 2 }}>{t("login.or_divider")}</Divider>
-              <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  opacity: loading ? 0.5 : 1,
+                  pointerEvents: loading ? "none" : "auto",
+                }}
+              >
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
-                  onError={() => console.log("Login Failed")}
+                  onError={handleGoogleError}
                 />
               </Box>
             </>
           )}
 
-          <Button sx={{ mt: 2 }} onClick={() => setIsSignup(!isSignup)}>
+          <Button
+            sx={{ mt: 2 }}
+            onClick={() => setIsSignup(!isSignup)}
+            disabled={loading}
+          >
             {isSignup
               ? t("login.switch_to_login")
               : t("login.switch_to_signup")}
