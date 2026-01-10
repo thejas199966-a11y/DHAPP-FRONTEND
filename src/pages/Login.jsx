@@ -39,8 +39,12 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef(null);
+  const initialLaunch = useRef(true);
 
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleClickShowPassword = () => {
+    setShowPassword((show) => !show);
+    initialLaunch.current = false;
+  };
 
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
@@ -65,7 +69,7 @@ const Login = () => {
 
   useEffect(() => {
     setTimeout(() => {
-      if (passwordRef.current) {
+      if (passwordRef.current && !initialLaunch.current) {
         const valueLength = passwordRef.current.value.length;
         passwordRef.current.selectionStart = valueLength;
         passwordRef.current.selectionEnd = valueLength;
