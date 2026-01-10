@@ -167,8 +167,6 @@ export default function TripPlanner() {
       return;
     }
 
-    if (loading) return;
-
     setLoading(true);
 
     navigator.geolocation.getCurrentPosition(
@@ -220,10 +218,13 @@ export default function TripPlanner() {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [dispatch, formData.destination]);
+  }, [formData.destination]);
 
   useEffect(() => {
-    getPreciseLocation();
+    // Only fetch precise location if it hasn't been determined yet.
+    if (!formData.startCoords) {
+      getPreciseLocation();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -233,10 +234,6 @@ export default function TripPlanner() {
 
   const fetchRoute = async (start, end) => {
     if (!start || !end) return;
-
-    if (loading) return;
-
-    setLoading(true);
 
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
