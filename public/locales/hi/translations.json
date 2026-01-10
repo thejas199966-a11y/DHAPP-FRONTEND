@@ -113,5 +113,9 @@
     "status_available": "उपलब्ध",
     "status_maintenance": "रखरखाव",
     "unassigned": "अनिर्दिष्ट"
+  },
+  "auth": {
+    "login": "लॉग इन करें",
+    "signup": "साइन अप करें"
   }
 }

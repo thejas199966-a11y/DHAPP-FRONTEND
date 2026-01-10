@@ -4,6 +4,8 @@ import { Button, Typography, Box } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { keyframes } from "@emotion/react";
 import { showNotification } from "../features/notificationSlice";
+import { openLoginModal } from "../features/authModalSlice";
+import { useNavigate } from "react-router-dom";
 
 // --- 1. Define Animations ---
 
@@ -235,11 +237,13 @@ const MountainIcon = ({ isNight }) => {
 
 // --- 3. The Component ---
 
-const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
+const AnimatedTravelButton = ({ t, isMobile }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { mode } = useSelector((state) => state.theme);
   const { tripData } = useSelector((state) => state.user);
+  const { token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const isNight = mode === "dark";
 
   const validateTripData = () => {
@@ -283,6 +287,11 @@ const AnimatedTravelButton = ({ t, navigate, isMobile }) => {
 
   const handleClick = () => {
     if (isAnimating) return;
+
+    if (!token) {
+      dispatch(openLoginModal());
+      return;
+    }
 
     if (!validateTripData()) return;
 

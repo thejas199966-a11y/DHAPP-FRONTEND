@@ -113,5 +113,9 @@
     "status_available": "ಲಭ್ಯವಿದೆ",
     "status_maintenance": "ನಿರ್ವಹಣೆ",
     "unassigned": "ನಿಯೋಜಿಸಲಾಗಿಲ್ಲ"
+  },
+  "auth": {
+    "login": "ಲಾಗಿನ್ ಮಾಡಿ",
+    "signup": "ಸೈನ್ ಅಪ್ ಮಾಡಿ"
   }
 }

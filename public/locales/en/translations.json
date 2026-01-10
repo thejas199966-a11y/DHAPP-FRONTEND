@@ -113,5 +113,9 @@
     "status_available": "Available",
     "status_maintenance": "Maintenance",
     "unassigned": "Unassigned"
+  },
+  "auth": {
+    "login": "Login",
+    "signup": "Signup"
   }
 }

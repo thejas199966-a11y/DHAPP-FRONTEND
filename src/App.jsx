@@ -13,9 +13,9 @@ import { lightTheme, darkTheme } from "./theme";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Notification from "./components/Notification";
+import LoginModal from "./components/LoginModal";
 
 // Pages
-import Login from "./pages/Login";
 import UserDashboard from "./pages/Dashboard";
 import BookDriver from "./pages/BookDriver";
 import BookTravel from "./pages/BookTravel";
@@ -25,38 +25,15 @@ import OrgDashboard from "./pages/OrgDashboard";
 function App() {
   const { mode } = useSelector((state) => state.theme);
   const theme = mode === "light" ? lightTheme : darkTheme;
+  const { token, user } = useSelector((state) => state.auth);
 
-  // --- 1. SMART HOME COMPONENT (Redirects based on Role) ---
-  const RoleBasedHome = () => {
-    const { token, user } = useSelector((state) => state.auth);
-
-    if (!token) return <Navigate to="/login" />;
-
-    const role = user?.role || "user";
-
-    if (role === "driver") return <DriverDashboard />;
-    if (role === "organisation") return <OrgDashboard />;
-
-    // Default: User Dashboard
-    return <UserDashboard />;
-  };
-
-  // --- 2. ROLE PROTECTED ROUTE (Security Guard) ---
-  // Checks if you are logged in AND if you have the right role
-  const RoleProtectedRoute = ({ children, allowedRoles }) => {
-    const { token, user } = useSelector((state) => state.auth);
-
-    // 1. Check Authentication
-    if (!token) return <Navigate to="/login" />;
-
-    // 2. Check Authorization (Role)
-    // If specific roles are required, and the user doesn't match...
-    if (allowedRoles && !allowedRoles.includes(user?.role)) {
-      // Redirect them back to their safety zone (Home/Dashboard)
-      return <Navigate to="/" replace />;
+  const HomeRoute = () => {
+    if (token) {
+      if (user?.role === "driver") return <Navigate to="/driver-dashboard" />;
+      if (user?.role === "organisation")
+        return <Navigate to="/org-dashboard" />;
     }
-
-    return children;
+    return <UserDashboard />;
   };
 
   return (
@@ -64,6 +41,7 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Notification />
+        <LoginModal />
         <Box
           sx={{
             display: "flex",
@@ -77,41 +55,11 @@ function App() {
           <Navbar />
           <Box component="main" sx={{ flexGrow: 1, width: "100%" }}>
             <Routes>
-              <Route path="/login" element={<Login />} />
-
-              {/* Root Path: Decides which Dashboard to show */}
-              <Route path="/" element={<RoleBasedHome />} />
-
-              {/* --- RESTRICTED USER ROUTES --- */}
-              {/* Only 'user' role can access these. Drivers/Orgs will be redirected to Home */}
-              <Route
-                path="/book-driver"
-                element={
-                  <RoleProtectedRoute allowedRoles={["user"]}>
-                    <BookDriver />
-                  </RoleProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/book-travel"
-                element={
-                  <RoleProtectedRoute allowedRoles={["user"]}>
-                    <BookTravel />
-                  </RoleProtectedRoute>
-                }
-              />
-
-              {/* If you add specific routes for drivers later, you restrict them like this: */}
-              {/* <Route 
-                path="/my-trips" 
-                element={
-                  <RoleProtectedRoute allowedRoles={['driver']}>
-                    <DriverTrips />
-                  </RoleProtectedRoute>
-                } 
-              /> 
-              */}
+              <Route path="/" element={<HomeRoute />} />
+              <Route path="/book-driver" element={<BookDriver />} />
+              <Route path="/book-travel" element={<BookTravel />} />
+              <Route path="/driver-dashboard" element={<DriverDashboard />} />
+              <Route path="/org-dashboard" element={<OrgDashboard />} />
             </Routes>
           </Box>
           <Footer />

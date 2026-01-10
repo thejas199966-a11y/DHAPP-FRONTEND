@@ -27,17 +27,17 @@ import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { setLanguage } from "../features/languageSlice";
 import { logout } from "../features/authSlice";
 import { toggleTheme } from "../features/themeSlice";
+import { openLoginModal } from "../features/authModalSlice";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
   const { mode } = useSelector((state) => state.theme);
-  const location = useLocation();
   const navigate = useNavigate();
 
   const { t, i18n } = useTranslation();
@@ -60,6 +60,10 @@ const Navbar = () => {
     dispatch(logout());
     handleCloseProfileMenu();
     if (isMobile) setDrawerOpen(false);
+  };
+
+  const handleLoginClick = () => {
+    dispatch(openLoginModal());
   };
 
   const handleChangeLanguage = (langCode, langLabel) => {
@@ -134,16 +138,14 @@ const Navbar = () => {
           </Menu>
         </Box>
       ) : (
-        location.pathname !== "/login" && (
-          <>
-            <Button color="inherit" component={Link} to="/login">
-              {t("auth.login")}
-            </Button>
-            <Button color="inherit" component={Link} to="/login">
-              {t("auth.signup")}
-            </Button>
-          </>
-        )
+        <>
+          <Button color="inherit" onClick={handleLoginClick}>
+            {t("auth.login")}
+          </Button>
+          <Button color="inherit" onClick={handleLoginClick}>
+            {t("auth.signup")}
+          </Button>
+        </>
       )}
     </>
   );
@@ -186,22 +188,20 @@ const Navbar = () => {
                 </ListItem>
               </>
             ) : (
-              location.pathname !== "/login" && (
-                <>
-                  <ListItem button onClick={() => navigate("/login")}>
-                    <ListItemIcon>
-                      <LoginIcon />
-                    </ListItemIcon>
-                    <ListItemText primary={t("auth.login")} />
-                  </ListItem>
-                  <ListItem button onClick={() => navigate("/login")}>
-                    <ListItemIcon>
-                      <AccountCircleIcon />
-                    </ListItemIcon>
-                    <ListItemText primary={t("auth.signup")} />
-                  </ListItem>
-                </>
-              )
+              <>
+                <ListItem button onClick={handleLoginClick}>
+                  <ListItemIcon>
+                    <LoginIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={t("auth.login")} />
+                </ListItem>
+                <ListItem button onClick={handleLoginClick}>
+                  <ListItemIcon>
+                    <AccountCircleIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={t("auth.signup")} />
+                </ListItem>
+              </>
             )}
             <Divider />
             <ListItem button onClick={handleThemeChange}>

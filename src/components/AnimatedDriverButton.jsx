@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Button, Typography, Box } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { keyframes } from "@emotion/react";
+import { openLoginModal } from "../features/authModalSlice";
+import { useNavigate } from "react-router-dom";
 
 // --- 1. Define Animations ---
 
@@ -169,13 +171,22 @@ const RealisticCityIcon = ({ isNight }) => {
 
 // --- 3. The Component ---
 
-const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
+const AnimatedDriverButton = ({ t, isMobile }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { mode } = useSelector((state) => state.theme);
+  const { token } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const isNight = mode === "dark";
 
   const handleClick = () => {
     if (isAnimating) return;
+
+    if (!token) {
+      dispatch(openLoginModal());
+      return;
+    }
+
     setIsAnimating(true);
     setTimeout(() => {
       navigate("/book-driver");
@@ -240,7 +251,7 @@ const AnimatedDriverButton = ({ t, navigate, isMobile }) => {
           mt: 0.5,
           zIndex: 30,
           opacity: isAnimating ? 0 : 1,
-          color: "text.primary"
+          color: "text.primary",
         }}
       />
 

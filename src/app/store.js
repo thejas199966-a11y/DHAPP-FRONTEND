@@ -1,11 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import driverReducer from "../features/driverSlice";
 import authReducer from "../features/authSlice";
-import languageReducer from '../features/languageSlice';
-import notificationReducer from '../features/notificationSlice';
-import userReducer from '../features/userSlice';
-import travelsReducer from '../features/travelSlice';
-import themeReducer from '../features/themeSlice';
+import languageReducer from "../features/languageSlice";
+import notificationReducer from "../features/notificationSlice";
+import userReducer from "../features/userSlice";
+import travelsReducer from "../features/travelSlice";
+import themeReducer from "../features/themeSlice";
+import authModalReducer from "../features/authModalSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,5 +17,6 @@ export const store = configureStore({
     user: userReducer,
     travels: travelsReducer,
     theme: themeReducer,
+    authModal: authModalReducer,
   },
 });
