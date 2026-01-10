@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   Paper,
   TextField,
@@ -19,7 +19,11 @@ import {
 } from "@mui/material";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess } from "../features/authSlice";
+import {
+  loginSuccess,
+  verifyEmail,
+  resetEmailVerification,
+} from "../features/authSlice";
 import { showNotification } from "../features/notificationSlice";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -32,6 +36,8 @@ import BusinessIcon from "@mui/icons-material/Business";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CloseIcon from "@mui/icons-material/Close";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useTranslation } from "react-i18next";
 
 const LoginModal = () => {
@@ -46,12 +52,20 @@ const LoginModal = () => {
   const { isLoginModalOpen, initialView } = useSelector(
     (state) => state.authModal
   );
+  const { emailVerificationStatus, emailVerificationError } = useSelector(
+    (state) => state.auth
+  );
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (isLoginModalOpen) {
       setIsSignup(initialView === "signup");
+    } else {
+      // Reset verification state when modal closes
+      dispatch(resetEmailVerification());
     }
-  }, [isLoginModalOpen, initialView]);
+  }, [isLoginModalOpen, initialView, dispatch]);
 
   const handleClickShowPassword = () => {
     setShowPassword((show) => !show);
@@ -75,9 +89,21 @@ const LoginModal = () => {
     address: "", // For Organisation
   });
 
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  const handleEmailChange = (e) => {
+    setFormData({ ...formData, email: e.target.value });
+  };
+
+  const handleEmailBlur = () => {
+    if (isSignup && formData.email) {
+      if (emailVerificationStatus !== "idle") {
+        dispatch(resetEmailVerification());
+      }
+      dispatch(verifyEmail(formData.email));
+    }
+  };
 
   // --- CONFIG FOR ROLES (ICONS & GIFS) ---
   const roleData = [
@@ -148,6 +174,16 @@ const LoginModal = () => {
     e.preventDefault();
     if (loading) return;
 
+    if (isSignup && emailVerificationStatus !== "succeeded") {
+      dispatch(
+        showNotification({
+          message: "Please enter a valid email address.",
+          severity: "error",
+        })
+      );
+      return;
+    }
+
     setLoading(true);
 
     const endpoint = isSignup ? "/auth/signup" : "/auth/login";
@@ -202,6 +238,12 @@ const LoginModal = () => {
     console.log("Login Failed");
     setLoading(false);
   };
+
+  const isSignupButtonDisabled =
+    loading ||
+    (isSignup &&
+      emailVerificationStatus !== "succeeded" &&
+      formData.email !== "");
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
@@ -501,9 +543,29 @@ const LoginModal = () => {
                     }
                     margin="normal"
                     disabled={loading}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
+                    error={isSignup && emailVerificationStatus === "failed"}
+                    helperText={
+                      isSignup && emailVerificationStatus === "failed"
+                        ? emailVerificationError
+                        : ""
                     }
+                    InputProps={{
+                      endAdornment: isSignup && (
+                        <InputAdornment position="end">
+                          {emailVerificationStatus === "loading" && (
+                            <CircularProgress size={20} />
+                          )}
+                          {emailVerificationStatus === "succeeded" && (
+                            <CheckCircleOutlineIcon color="success" />
+                          )}
+                          {emailVerificationStatus === "failed" && (
+                            <ErrorOutlineIcon color="error" />
+                          )}
+                        </InputAdornment>
+                      ),
+                    }}
                   />
 
                   <TextField
@@ -561,7 +623,7 @@ const LoginModal = () => {
                     size="large"
                     type="submit"
                     sx={{ mt: 3, mb: 2 }}
-                    disabled={loading}
+                    disabled={isSignupButtonDisabled}
                   >
                     {loading ? (
                       <CircularProgress size={24} color="inherit" />
