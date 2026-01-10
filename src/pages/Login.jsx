@@ -7,8 +7,6 @@ import {
   Box,
   Divider,
   LinearProgress,
-  ToggleButton,
-  ToggleButtonGroup,
   FormControl,
   InputLabel,
   Select,
@@ -67,6 +65,35 @@ const Login = () => {
   const navigate = useNavigate();
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
+  // --- CONFIG FOR ROLES (ICONS & GIFS) ---
+  // REPLACE THE 'videoSrc' URLs below with your local assets or hosted URLs
+  const roleData = [
+    {
+      id: "user",
+      label: t("login.user_role"),
+      icon: PersonIcon,
+      // Example Placeholder: Abstract blue tech
+      videoSrc:
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcjRybTN4YjV6bm81b3E4OG45b3E4OG45b3E4OG45b3E4OG45YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tn33aiTi1jkl6HAx/giphy.gif",
+    },
+    {
+      id: "driver",
+      label: t("login.driver_role"),
+      icon: DirectionsCarIcon,
+      // Example Placeholder: Road/Car motion
+      videoSrc:
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3E4OG45b3E4OG45b3E4OG45b3E4OG45b3E4OG45b3E4OG45YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKrEzvJbsQN9L4E/giphy.gif",
+    },
+    {
+      id: "organisation",
+      label: t("login.org_role"),
+      icon: BusinessIcon,
+      // Example Placeholder: Cityscape/Office
+      videoSrc:
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3E4OG45b3E4OG45b3E4OG45b3E4OG45b3E4OG45b3E4OG45YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlHJGHe3yAMhdQY/giphy.gif",
+    },
+  ];
+
   useEffect(() => {
     setTimeout(() => {
       if (passwordRef.current && !initialLaunch.current) {
@@ -77,13 +104,6 @@ const Login = () => {
       }
     }, 0);
   }, [showPassword]);
-
-  // Handle Role Toggle
-  const handleRoleChange = (event, newRole) => {
-    if (newRole !== null) {
-      setRole(newRole);
-    }
-  };
 
   const getPasswordStrength = (password) => {
     const length = password.length;
@@ -116,8 +136,6 @@ const Login = () => {
     setLoading(true);
 
     const endpoint = isSignup ? "/auth/signup" : "/auth/login";
-
-    // Inject Role into payload
     const payload = { ...formData, role: role };
 
     try {
@@ -183,30 +201,109 @@ const Login = () => {
           elevation={3}
           sx={{ p: 4, width: "100%", maxWidth: 450, textAlign: "center" }}
         >
-          {/* --- ROLE TOGGLE --- */}
-          <ToggleButtonGroup
-            value={role}
-            exclusive
-            onChange={handleRoleChange}
-            aria-label="User Role"
-            color="primary"
-            sx={{ mb: 3, width: "100%" }}
-            disabled={loading}
+          {/* --- CUSTOM ROLE SELECTOR --- */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 1.5,
+              mb: 3,
+            }}
           >
-            <ToggleButton value="user" sx={{ flex: 1 }} disabled={loading}>
-              <PersonIcon sx={{ mr: 1 }} /> {t("login.user_role")}
-            </ToggleButton>
-            <ToggleButton value="driver" sx={{ flex: 1 }} disabled={loading}>
-              <DirectionsCarIcon sx={{ mr: 1 }} /> {t("login.driver_role")}
-            </ToggleButton>
-            <ToggleButton
-              value="organisation"
-              sx={{ flex: 1 }}
-              disabled={loading}
-            >
-              <BusinessIcon sx={{ mr: 1 }} /> {t("login.org_role")}
-            </ToggleButton>
-          </ToggleButtonGroup>
+            {roleData.map((item) => {
+              const isActive = role === item.id;
+              return (
+                <Box
+                  key={item.id}
+                  onClick={() => !loading && setRole(item.id)}
+                  sx={{
+                    flex: 1,
+                    height: 100, // Fixed height for the card
+                    borderRadius: 2,
+                    border: isActive
+                      ? "2px solid #1976d2"
+                      : "1px solid #e0e0e0",
+                    position: "relative",
+                    overflow: "hidden",
+                    cursor: loading ? "not-allowed" : "pointer",
+                    transition: "all 0.3s ease",
+                    bgcolor: isActive ? "transparent" : "#fff",
+                    "&:hover": {
+                      borderColor: "#1976d2",
+                    },
+                  }}
+                >
+                  {/* Background Video/GIF (Only visible when active) */}
+                  {isActive && (
+                    <Box
+                      component="img"
+                      src={item.videoSrc}
+                      alt={`${item.id} background`}
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        zIndex: 0,
+                        opacity: 0.8, // Adjust opacity to make text readable
+                      }}
+                    />
+                  )}
+
+                  {/* Optional Overlay to improve text contrast on video */}
+                  {isActive && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        bgcolor: "rgba(255, 255, 255, 0.7)", // White tint overlay
+                        zIndex: 1,
+                      }}
+                    />
+                  )}
+
+                  {/* Content Container (Icon + Text) */}
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      zIndex: 2,
+                      width: "100%",
+                      // Nav-like animation logic:
+                      top: isActive ? "8px" : "50%",
+                      left: "50%",
+                      transform: isActive
+                        ? "translate(-50%, 0) scale(0.85)"
+                        : "translate(-50%, -50%) scale(1)",
+                      transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: isActive ? "#1565c0" : "#757575",
+                    }}
+                  >
+                    <item.icon sx={{ fontSize: isActive ? 28 : 32, mb: 0.5 }} />
+                    <Typography
+                      variant="button"
+                      sx={{
+                        fontSize: isActive ? "0.75rem" : "0.875rem",
+                        fontWeight: "bold",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {item.label}
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+          {/* --- END CUSTOM ROLE SELECTOR --- */}
 
           <Typography variant="h5" sx={{ mb: 1, fontWeight: "bold" }}>
             {isSignup
