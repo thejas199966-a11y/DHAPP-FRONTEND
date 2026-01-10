@@ -60,10 +60,15 @@ const Navbar = () => {
     dispatch(logout());
     handleCloseProfileMenu();
     if (isMobile) setDrawerOpen(false);
+    navigate("/", { replace: true });
   };
 
   const handleLoginClick = () => {
-    dispatch(openLoginModal());
+    dispatch(openLoginModal({ initialView: "login" }));
+  };
+
+  const handleSignupClick = () => {
+    dispatch(openLoginModal({ initialView: "signup" }));
   };
 
   const handleChangeLanguage = (langCode, langLabel) => {
@@ -142,7 +147,7 @@ const Navbar = () => {
           <Button color="inherit" onClick={handleLoginClick}>
             {t("auth.login")}
           </Button>
-          <Button color="inherit" onClick={handleLoginClick}>
+          <Button color="inherit" onClick={handleSignupClick}>
             {t("auth.signup")}
           </Button>
         </>
@@ -195,7 +200,7 @@ const Navbar = () => {
                   </ListItemIcon>
                   <ListItemText primary={t("auth.login")} />
                 </ListItem>
-                <ListItem button onClick={handleLoginClick}>
+                <ListItem button onClick={handleSignupClick}>
                   <ListItemIcon>
                     <AccountCircleIcon />
                   </ListItemIcon>

@@ -14,6 +14,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Notification from "./components/Notification";
 import LoginModal from "./components/LoginModal";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
 import UserDashboard from "./pages/Dashboard";
@@ -56,10 +57,38 @@ function App() {
           <Box component="main" sx={{ flexGrow: 1, width: "100%" }}>
             <Routes>
               <Route path="/" element={<HomeRoute />} />
-              <Route path="/book-driver" element={<BookDriver />} />
-              <Route path="/book-travel" element={<BookTravel />} />
-              <Route path="/driver-dashboard" element={<DriverDashboard />} />
-              <Route path="/org-dashboard" element={<OrgDashboard />} />
+              <Route
+                path="/book-driver"
+                element={
+                  <ProtectedRoute>
+                    <BookDriver />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/book-travel"
+                element={
+                  <ProtectedRoute>
+                    <BookTravel />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/driver-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["driver"]}>
+                    <DriverDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/org-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["organisation"]}>
+                    <OrgDashboard />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </Box>
           <Footer />

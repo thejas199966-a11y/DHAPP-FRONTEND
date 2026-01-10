@@ -43,7 +43,15 @@ const LoginModal = () => {
   const passwordRef = useRef(null);
   const initialLaunch = useRef(true);
 
-  const { isLoginModalOpen } = useSelector((state) => state.authModal);
+  const { isLoginModalOpen, initialView } = useSelector(
+    (state) => state.authModal
+  );
+
+  useEffect(() => {
+    if (isLoginModalOpen) {
+      setIsSignup(initialView === "signup");
+    }
+  }, [isLoginModalOpen, initialView]);
 
   const handleClickShowPassword = () => {
     setShowPassword((show) => !show);
