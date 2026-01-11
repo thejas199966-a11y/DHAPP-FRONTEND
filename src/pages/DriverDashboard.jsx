@@ -1,170 +1,141 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  Container,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Switch,
   Box,
+  Drawer,
   List,
   ListItem,
-  ListItemAvatar,
-  Avatar,
+  ListItemButton,
+  ListItemIcon,
   ListItemText,
-  Chip,
-  Button,
+  CircularProgress,
+  Alert,
+  Typography,
 } from "@mui/material";
-import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
-import NavigationIcon from "@mui/icons-material/Navigation";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import HistoryIcon from "@mui/icons-material/History";
 import { useTranslation } from "react-i18next";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import PersonIcon from "@mui/icons-material/Person";
+import BookOnlineIcon from "@mui/icons-material/BookOnline";
+
+import { fetchDriverProfile } from "../features/driverSlice";
+import { fetchDriverBookings, updateTripStatus } from "../features/tripSlice";
+import { showNotification } from "../features/notificationSlice";
+
+import ProfileEditor from "../components/ProfileEditor";
+import BookingRequests from "../components/BookingRequests";
+import DashboardHome from "../components/DashboardHome";
+
+const drawerWidth = 240;
 
 const DriverDashboard = () => {
   const { t } = useTranslation();
-  const [isOnline, setIsOnline] = useState(false);
+  const dispatch = useDispatch();
+  const [activeView, setActiveView] = useState("home");
 
-  // Mock Data for "Real-time" feel
-  const recentRides = [
-    {
-      id: 1,
-      from: "Indiranagar",
-      to: "Airport",
-      fare: "₹850",
-      status: "Completed",
-      date: "Today, 10:30 AM",
-    },
-    {
-      id: 2,
-      from: "Koramangala",
-      to: "Whitefield",
-      fare: "₹420",
-      status: "Completed",
-      date: "Yesterday, 6:15 PM",
-    },
+  const { profile, profileStatus } = useSelector((state) => state.drivers);
+  const { bookings, status: bookingsStatus } = useSelector(
+    (state) => state.trips
+  );
+
+  useEffect(() => {
+    dispatch(fetchDriverProfile());
+    dispatch(fetchDriverBookings());
+  }, [dispatch]);
+
+  const handleUpdateStatus = (tripId, status) => {
+    dispatch(updateTripStatus({ tripId, status }))
+      .unwrap()
+      .then(() => {
+        dispatch(
+          showNotification({
+            message: `Booking ${status}`,
+            severity: "success",
+          })
+        );
+      })
+      .catch((err) => {
+        dispatch(
+          showNotification({
+            message: err.message || "Failed to update status.",
+            severity: "error",
+          })
+        );
+      });
+  };
+
+  const menuItems = [
+    { text: "Dashboard", icon: <DashboardIcon />, view: "home" },
+    { text: "My Profile", icon: <PersonIcon />, view: "profile" },
+    { text: "Booking Requests", icon: <BookOnlineIcon />, view: "bookings" },
   ];
 
+  const renderContent = () => {
+    if (profileStatus === "loading" || bookingsStatus === "loading") {
+      return <CircularProgress />;
+    }
+    if (profileStatus === "failed" && bookingsStatus === "failed") {
+      return (
+        <Alert severity="error">
+          Error loading dashboard data. Please try again later.
+        </Alert>
+      );
+    }
+
+    switch (activeView) {
+      case "home":
+        return <DashboardHome />;
+      case "profile":
+        return <ProfileEditor profile={profile} status={profileStatus} />;
+      case "bookings":
+        const pendingBookings = bookings.filter((b) => b.status === "pending");
+        return (
+          <BookingRequests
+            bookings={pendingBookings}
+            onUpdateStatus={handleUpdateStatus}
+          />
+        );
+      default:
+        return <DashboardHome />;
+    }
+  };
+
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 8 }}>
-      {/* --- STATUS HEADER --- */}
-      <Card
+    <Box sx={{ display: "flex", height: "100%" }}>
+      <Drawer
+        variant="permanent"
         sx={{
-          mb: 4,
-          bgcolor: isOnline ? "#e8f5e9" : "#ffebee",
-          transition: "0.3s",
+          width: drawerWidth,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: {
+            width: drawerWidth,
+            boxSizing: "border-box",
+            position: "relative", // Key change to keep it in flow
+          },
         }}
       >
-        <CardContent
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box>
-            <Typography variant="h5" fontWeight="bold">
-              {isOnline
-                ? t("driver_dashboard.online_status")
-                : t("driver_dashboard.offline_status")}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {isOnline
-                ? t("driver_dashboard.receiving_requests")
-                : t("driver_dashboard.go_online_prompt")}
-            </Typography>
-          </Box>
-          <Switch
-            checked={isOnline}
-            onChange={(e) => setIsOnline(e.target.checked)}
-            color="success"
-            inputProps={{ "aria-label": "controlled" }}
-            sx={{ transform: "scale(1.5)" }}
-          />
-        </CardContent>
-      </Card>
-
-      {/* --- STATS GRID --- */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={6}>
-          <Card sx={{ textAlign: "center", bgcolor: "#e3f2fd" }}>
-            <CardContent>
-              <AttachMoneyIcon color="primary" fontSize="large" />
-              <Typography variant="h4" fontWeight="bold">
-                ₹1,270
-              </Typography>
-              <Typography variant="caption">
-                {t("driver_dashboard.todays_earnings")}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6}>
-          <Card sx={{ textAlign: "center", bgcolor: "#f3e5f5" }}>
-            <CardContent>
-              <DirectionsCarIcon color="secondary" fontSize="large" />
-              <Typography variant="h4" fontWeight="bold">
-                4
-              </Typography>
-              <Typography variant="caption">
-                {t("driver_dashboard.rides_completed")}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* --- RECENT ACTIVITY --- */}
-      <Typography
-        variant="h6"
-        fontWeight="bold"
-        gutterBottom
-        sx={{ display: "flex", alignItems: "center" }}
-      >
-        <HistoryIcon sx={{ mr: 1 }} />{" "}
-        {t("driver_dashboard.recent_activity")}
-      </Typography>
-
-      <Card>
         <List>
-          {recentRides.map((ride) => (
-            <ListItem key={ride.id} divider>
-              <ListItemAvatar>
-                <Avatar sx={{ bgcolor: "#2f34cfff" }}>
-                  <NavigationIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={`${ride.from} ➔ ${ride.to}`}
-                secondary={ride.date}
-              />
-              <Box sx={{ textAlign: "right" }}>
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="bold"
-                  color="success.main"
-                >
-                  {ride.fare}
-                </Typography>
-                <Chip
-                  label={t("driver_dashboard.ride_status_completed")}
-                  size="small"
-                  color="success"
-                  variant="outlined"
+          {menuItems.map((item) => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                selected={activeView === item.view}
+                onClick={() => setActiveView(item.view)}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText
+                  primary={t(`driver_dashboard.${item.view}_menu`, item.text)}
                 />
-              </Box>
+              </ListItemButton>
             </ListItem>
           ))}
         </List>
-      </Card>
-
-      {/* Floating Action Button logic for Mobile */}
-      <Box sx={{ textAlign: "center", mt: 4 }}>
-        <Button variant="outlined" startIcon={<HistoryIcon />}>
-          {t("driver_dashboard.view_full_history_button")}
-        </Button>
+      </Drawer>
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          {menuItems.find((item) => item.view === activeView)?.text}
+        </Typography>
+        {renderContent()}
       </Box>
-    </Container>
+    </Box>
   );
 };
 

@@ -22,6 +22,7 @@ import BookTravel from "./pages/BookTravel";
 import DriverDashboard from "./pages/DriverDashboard";
 import OrgDashboard from "./pages/OrgDashboard";
 import NotFound from "./pages/NotFound";
+import DriverDetailPage from "./pages/DriverDetailPage";
 
 function App() {
   const { mode } = useSelector((state) => state.theme);
@@ -51,6 +52,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <BookDriver />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/:id"
+              element={
+                <ProtectedRoute>
+                  <DriverDetailPage />
                 </ProtectedRoute>
               }
             />

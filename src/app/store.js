@@ -7,6 +7,7 @@ import userReducer from "../features/userSlice";
 import travelsReducer from "../features/travelSlice";
 import themeReducer from "../features/themeSlice";
 import authModalReducer from "../features/authModalSlice";
+import tripReducer from "../features/tripSlice";
 
 export const store = configureStore({
   reducer: {
@@ -18,5 +19,6 @@ export const store = configureStore({
     travels: travelsReducer,
     theme: themeReducer,
     authModal: authModalReducer,
+    trips: tripReducer,
   },
 });

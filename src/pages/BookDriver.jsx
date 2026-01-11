@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Container,
   Grid,
@@ -87,17 +88,6 @@ export default function BookDriver() {
     (page - 1) * itemsPerPage,
     page * itemsPerPage
   );
-
-  const handleBookNow = (driverId) => {
-    console.log(`Booking initiated for Driver ID: ${driverId}`);
-    dispatch(
-      showNotification({
-        message: t("book_driver.booking_notification"),
-        severity: "info",
-      })
-    );
-  };
-
 
   // Skeleton Loader (Matches Card Layout)
   const renderSkeletons = () =>
@@ -209,7 +199,9 @@ export default function BookDriver() {
                 <MenuItem value="ALL">{t("book_driver.all_types")}</MenuItem>
                 <MenuItem value="SEDAN">{t("book_driver.sedan")}</MenuItem>
                 <MenuItem value="SUV">{t("book_driver.suv")}</MenuItem>
-                <MenuItem value="HATCHBACK">{t("book_driver.hatchback")}</MenuItem>
+                <MenuItem value="HATCHBACK">
+                  {t("book_driver.hatchback")}
+                </MenuItem>
                 <MenuItem value="LUXURY">{t("book_driver.luxury")}</MenuItem>
               </Select>
             </FormControl>
@@ -229,8 +221,12 @@ export default function BookDriver() {
                   </InputAdornment>
                 }
               >
-                <MenuItem value="rating">{t("book_driver.highest_rated")}</MenuItem>
-                <MenuItem value="experience">{t("book_driver.most_experienced")}</MenuItem>
+                <MenuItem value="rating">
+                  {t("book_driver.highest_rated")}
+                </MenuItem>
+                <MenuItem value="experience">
+                  {t("book_driver.most_experienced")}
+                </MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -245,12 +241,16 @@ export default function BookDriver() {
           : paginatedDrivers.map((driver) => (
               <Grid item key={driver.id} xs={12} sm={6} md={4}>
                 <Card
+                  component={Link}
+                  to={`/driver/${driver.id}`}
                   sx={{
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
                     transition: "0.3s",
                     borderRadius: 3,
+                    textDecoration: "none",
+                    color: "inherit",
                     "&:hover": { transform: "translateY(-5px)", boxShadow: 6 },
                   }}
                 >
@@ -373,27 +373,6 @@ export default function BookDriver() {
                       </Typography>
                     </Box>
                   </CardContent>
-
-                  {/* Footer / Action Button */}
-                  <Box sx={{ p: 2, pt: 0 }}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      disableElevation
-                      disabled={driver.status === "busy"}
-                      onClick={() => handleBookNow(driver.id)}
-                      sx={{
-                        borderRadius: 2,
-                        textTransform: "none",
-                        fontSize: "1rem",
-                        py: 1,
-                      }}
-                    >
-                      {driver.status === "busy"
-                        ? t("book_driver.status_unavailable")
-                        : t("book_driver.book_driver_button")}
-                    </Button>
-                  </Box>
                 </Card>
               </Grid>
             ))}
