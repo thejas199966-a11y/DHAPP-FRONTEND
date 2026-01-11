@@ -28,6 +28,10 @@ import { showNotification } from "../features/notificationSlice";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { closeLoginModal } from "../features/authModalSlice";
+import user_media from "../assets/videos/user_login_signup.mp4";
+// NOTE: You can replace these with specific videos for each role
+import driver_media from "../assets/videos/user_login_signup.mp4";
+import org_media from "../assets/videos/user_login_signup.mp4";
 
 // Icons
 import PersonIcon from "@mui/icons-material/Person";
@@ -105,28 +109,25 @@ const LoginModal = () => {
     }
   };
 
-  // --- CONFIG FOR ROLES (ICONS & GIFS) ---
+  // --- CONFIG FOR ROLES (ICONS & VIDEOS) ---
   const roleData = [
     {
       id: "user",
       label: t("login.user_role"),
       icon: PersonIcon,
-      videoSrc:
-        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcjRybTN4YjV6bm81b3E4OG45b3E4OG45b3E4OG45b3E4OG45YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tn33aiTi1jkl6HAx/giphy.gif",
+      videoSrc: user_media,
     },
     {
       id: "driver",
       label: t("login.driver_role"),
       icon: DirectionsCarIcon,
-      videoSrc:
-        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3E4OG45b3E4OG45b3E4OG45b3E4OG45b3E4OG45b3E4OG45YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKrEzvJbsQN9L4E/giphy.gif",
+      videoSrc: driver_media,
     },
     {
       id: "organisation",
       label: t("login.org_role"),
       icon: BusinessIcon,
-      videoSrc:
-        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3E4OG45b3E4OG45b3E4OG45b3E4OG45b3E4OG45b3E4OG45YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlHJGHe3yAMhdQY/giphy.gif",
+      videoSrc: org_media,
     },
   ];
 
@@ -319,13 +320,15 @@ const LoginModal = () => {
                           },
                         }}
                       >
-                        {/* Background Video/GIF (Only visible when active) */}
+                        {/* Background Video (Only visible when active) */}
                         {isActive && (
-                          <Box
-                            component="img"
-                            src={item.videoSrc}
-                            alt={`${item.id} background`}
-                            sx={{
+                          <video
+                            key={item.videoSrc} // Add key to force re-render on src change
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            style={{
                               position: "absolute",
                               top: 0,
                               left: 0,
@@ -333,9 +336,11 @@ const LoginModal = () => {
                               height: "100%",
                               objectFit: "cover",
                               zIndex: 0,
-                              opacity: 0.8, // Adjust opacity to make text readable
+                              opacity: 0.8,
                             }}
-                          />
+                          >
+                            <source src={item.videoSrc} type="video/mp4" />
+                          </video>
                         )}
 
                         {/* Optional Overlay to improve text contrast on video */}
