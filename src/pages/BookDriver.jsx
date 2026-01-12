@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   Container,
@@ -32,7 +32,7 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import StarIcon from "@mui/icons-material/Star";
 import WorkHistoryIcon from "@mui/icons-material/WorkHistory";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import ArrowBackIos from "@mui/icons-material/ArrowBackIos";
+import ArrowBackIosNew from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIos from "@mui/icons-material/ArrowForwardIos";
 import GridView from "@mui/icons-material/GridView";
 import ViewCarouselOutlined from "@mui/icons-material/ViewCarouselOutlined";
@@ -51,6 +51,8 @@ export default function BookDriver() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isLandscape = useMediaQuery("(orientation: landscape)");
+  const carouselRef = useRef(null);
 
   // --- STATE MANAGEMENT ---
   const { list: drivers, status } = useSelector((state) => state.drivers);
@@ -59,12 +61,16 @@ export default function BookDriver() {
   const [sortBy, setSortBy] = useState("rating");
   const [gridPage, setGridPage] = useState(1);
   const [viewMode, setViewMode] = useState("carousel");
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
 
   // --- RESPONSIVE & DERIVED VALUES ---
-  const gridItemsPerPage = isMobile ? 8 : 15;
+  const gridItemsPerPage = isMobile ? 12 : 15;
+
+  let carouselVisibleItems;
+  if (isMobile) {
+    carouselVisibleItems = isLandscape ? 3 : 2;
+  } else {
+    carouselVisibleItems = 5;
+  }
 
   // --- INITIAL FETCH ---
   useEffect(() => {
@@ -88,47 +94,21 @@ export default function BookDriver() {
       return 0;
     });
 
-  // --- CAROUSEL & SWIPE HANDLERS ---
-  const carouselVisibleItems = isMobile ? 2 : 5;
-
-  const handleCarouselNext = () => {
-    setCarouselIndex((prev) =>
-      Math.min(prev + 1, filteredDrivers.length - carouselVisibleItems)
-    );
-  };
-
-  const handleCarouselPrev = () => {
-    setCarouselIndex((prev) => Math.max(prev - 1, 0));
-  };
-
-  const handleTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe) {
-      handleCarouselNext();
-    } else if (isRightSwipe) {
-      handleCarouselPrev();
+  // --- CAROUSEL SCROLL HANDLERS ---
+  const handleCarouselScroll = (direction) => {
+    if (carouselRef.current) {
+      const scrollAmount = carouselRef.current.clientWidth;
+      carouselRef.current.scrollBy({
+        left: direction === "next" ? scrollAmount : -scrollAmount,
+        behavior: "smooth",
+      });
     }
-    setTouchStart(null);
-    setTouchEnd(null);
   };
 
   // --- SKELETON LOADER ---
   const renderSkeletons = () =>
     Array.from(new Array(gridItemsPerPage)).map((_, index) => (
-      <Grid item key={index} xs={6} sm={4} md={12 / 5}>
+      <Grid item key={index} xs={3} sm={4} md={12 / 5}>
         <Card sx={{ height: "100%", borderRadius: 3, boxShadow: 1 }}>
           <CardContent sx={{ textAlign: "center", p: 3 }}>
             <Skeleton
@@ -478,76 +458,62 @@ export default function BookDriver() {
           }
 
           if (viewMode === "carousel") {
+            const cardGap = theme.spacing(2); // 16px
+            const cardWidth = `calc(100% / ${carouselVisibleItems} - (${cardGap} * (${carouselVisibleItems} - 1)) / ${carouselVisibleItems})`;
+
             return (
               <Box sx={{ position: "relative" }}>
-                <Box
-                  sx={{
-                    overflow: "hidden",
-                    position: "relative",
-                  }}
-                  {...(isMobile && {
-                    onTouchStart: handleTouchStart,
-                    onTouchMove: handleTouchMove,
-                    onTouchEnd: handleTouchEnd,
-                  })}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: 3,
-                      transition: "transform 0.5s ease-in-out",
-                      transform: `translateX(calc(-${carouselIndex} * (100% / ${carouselVisibleItems} + ${
-                        24 / carouselVisibleItems
-                      }px)))`,
-                    }}
-                  >
-                    {filteredDrivers.map((driver) => (
-                      <Box
-                        key={driver.id}
-                        sx={{
-                          minWidth: `calc(100% / ${carouselVisibleItems} - 24px * (${
-                            carouselVisibleItems - 1
-                          }) / ${carouselVisibleItems})`,
-                          flex: "0 0 auto",
-                        }}
-                      >
-                        <DriverCard driver={driver} />
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-                {/* Carousel Controls */}
                 <IconButton
-                  onClick={handleCarouselPrev}
-                  disabled={carouselIndex === 0}
+                  onClick={() => handleCarouselScroll("prev")}
                   sx={{
                     position: "absolute",
                     top: "50%",
-                    left: -24,
+                    left: -25,
                     transform: "translateY(-50%)",
-                    bgcolor: "white",
+                    zIndex: 2,
+                    bgcolor: "background.paper",
                     boxShadow: 3,
                     "&:hover": { bgcolor: "grey.200" },
-                    zIndex: 2,
                   }}
                 >
-                  <ArrowBackIos />
+                  <ArrowBackIosNew />
                 </IconButton>
+                <Box
+                  ref={carouselRef}
+                  sx={{
+                    display: "flex",
+                    overflowX: "auto",
+                    scrollSnapType: "x mandatory",
+                    gap: cardGap,
+                    py: 1, // Add padding for shadow visibility
+                    "&::-webkit-scrollbar": { display: "none" },
+                    scrollbarWidth: "none", // For Firefox
+                  }}
+                >
+                  {filteredDrivers.map((driver) => (
+                    <Box
+                      key={driver.id}
+                      sx={{
+                        minWidth: cardWidth,
+                        flex: `0 0 ${cardWidth}`,
+                        scrollSnapAlign: "start",
+                      }}
+                    >
+                      <DriverCard driver={driver} />
+                    </Box>
+                  ))}
+                </Box>
                 <IconButton
-                  onClick={handleCarouselNext}
-                  disabled={
-                    carouselIndex >=
-                    filteredDrivers.length - carouselVisibleItems
-                  }
+                  onClick={() => handleCarouselScroll("next")}
                   sx={{
                     position: "absolute",
                     top: "50%",
-                    right: -24,
+                    right: -25,
                     transform: "translateY(-50%)",
-                    bgcolor: "white",
+                    zIndex: 2,
+                    bgcolor: "background.paper",
                     boxShadow: 3,
                     "&:hover": { bgcolor: "grey.200" },
-                    zIndex: 2,
                   }}
                 >
                   <ArrowForwardIos />
@@ -561,26 +527,24 @@ export default function BookDriver() {
               <Box>
                 <Grid container spacing={3}>
                   {gridPaginatedDrivers.map((driver) => (
-                    <Grid
-                      item
-                      key={driver.id}
-                      xs={6}
-                      sm={4}
-                      md={12 / 5} /* 5 items per row on medium screens */
-                    >
+                    <Grid item key={driver.id} xs={3} sm={4} md={12 / 5}>
                       <DriverCard driver={driver} />
                     </Grid>
                   ))}
                 </Grid>
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
-                  <Pagination
-                    count={gridTotalPages}
-                    page={gridPage}
-                    onChange={(e, value) => setGridPage(value)}
-                    color="primary"
-                    size="large"
-                  />
-                </Box>
+                {gridTotalPages > 1 && (
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", mt: 6 }}
+                  >
+                    <Pagination
+                      count={gridTotalPages}
+                      page={gridPage}
+                      onChange={(e, value) => setGridPage(value)}
+                      color="primary"
+                      size="large"
+                    />
+                  </Box>
+                )}
               </Box>
             );
           }
