@@ -57,9 +57,11 @@ export default function BookDriver() {
   const [gridPage, setGridPage] = useState(1);
   const [viewMode, setViewMode] = useState("carousel");
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   // --- RESPONSIVE & DERIVED VALUES ---
-  const gridItemsPerPage = isMobile ? 12 : 15;
+  const gridItemsPerPage = isMobile ? 8 : 15;
 
   // --- INITIAL FETCH ---
   useEffect(() => {
@@ -79,14 +81,51 @@ export default function BookDriver() {
     .sort((a, b) => {
       if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
       if (sortBy === "experience")
-        return (b.experience_years || 0) - (a.experience_years || 0);
+        return (b.years_of_experience || 0) - (a.years_of_experience || 0);
       return 0;
     });
+
+  // --- CAROUSEL & SWIPE HANDLERS ---
+  const carouselVisibleItems = isMobile ? 2 : 5;
+
+  const handleCarouselNext = () => {
+    setCarouselIndex((prev) =>
+      Math.min(prev + 1, filteredDrivers.length - carouselVisibleItems)
+    );
+  };
+
+  const handleCarouselPrev = () => {
+    setCarouselIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      handleCarouselNext();
+    } else if (isRightSwipe) {
+      handleCarouselPrev();
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   // --- SKELETON LOADER ---
   const renderSkeletons = () =>
     Array.from(new Array(gridItemsPerPage)).map((_, index) => (
-      <Grid item key={index} xs={12} sm={6} md={12 / 5}>
+      <Grid item key={index} xs={6} sm={4} md={12 / 5}>
         <Card sx={{ height: "100%", borderRadius: 3, boxShadow: 1 }}>
           <CardContent sx={{ textAlign: "center", p: 3 }}>
             <Skeleton
@@ -256,18 +295,6 @@ export default function BookDriver() {
       <Box>
         {(() => {
           // --- RENDER LOGIC ---
-          const carouselVisibleItems = isMobile ? 4 : 5;
-
-          const handleCarouselNext = () => {
-            setCarouselIndex((prev) =>
-              Math.min(prev + 1, filteredDrivers.length - carouselVisibleItems)
-            );
-          };
-
-          const handleCarouselPrev = () => {
-            setCarouselIndex((prev) => Math.max(prev - 1, 0));
-          };
-
           const gridTotalPages = Math.ceil(
             filteredDrivers.length / gridItemsPerPage
           );
@@ -356,7 +383,7 @@ export default function BookDriver() {
                   />
                   <Chip
                     icon={<WorkHistoryIcon />}
-                    label={`${driver.experience_years || 3}+ ${t(
+                    label={`${driver.years_of_experience || 3}+ ${t(
                       "book_driver.years_abbr"
                     )}`}
                     size="small"
@@ -435,6 +462,11 @@ export default function BookDriver() {
                     overflow: "hidden",
                     position: "relative",
                   }}
+                  {...(isMobile && {
+                    onTouchStart: handleTouchStart,
+                    onTouchMove: handleTouchMove,
+                    onTouchEnd: handleTouchEnd,
+                  })}
                 >
                   <Box
                     sx={{
@@ -509,8 +541,8 @@ export default function BookDriver() {
                     <Grid
                       item
                       key={driver.id}
-                      xs={12}
-                      sm={6}
+                      xs={6}
+                      sm={4}
                       md={12 / 5} /* 5 items per row on medium screens */
                     >
                       <DriverCard driver={driver} />
