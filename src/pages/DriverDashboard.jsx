@@ -11,7 +11,6 @@ import {
   CircularProgress,
   Alert,
   Typography,
-  IconButton,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -19,7 +18,6 @@ import { useTranslation } from "react-i18next";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import BookOnlineIcon from "@mui/icons-material/BookOnline";
-import MenuIcon from "@mui/icons-material/Menu";
 
 import { fetchDriverProfile } from "../features/driverSlice";
 import { fetchDriverBookings, updateTripStatus } from "../features/tripSlice";
@@ -28,6 +26,7 @@ import { showNotification } from "../features/notificationSlice";
 import ProfileEditor from "../components/ProfileEditor";
 import BookingRequests from "../components/BookingRequests";
 import DashboardHome from "../components/DashboardHome";
+import AnimatedMenuIcon from "../components/AnimatedMenuIcon";
 
 const drawerWidth = 240;
 const collapsedDrawerWidth = 60;
@@ -55,6 +54,13 @@ const DriverDashboard = () => {
 
   const handleDrawerToggle = () => {
     setIsCollapsed(!isCollapsed);
+  };
+
+  const handleMenuItemClick = (view) => {
+    setActiveView(view);
+    if (isMobile) {
+      setIsCollapsed(true);
+    }
   };
 
   const handleUpdateStatus = (tripId, status) => {
@@ -101,14 +107,14 @@ const DriverDashboard = () => {
             justifyContent: isCollapsed ? "flex-start" : "flex-end",
           }}
         >
-          <MenuIcon />
+          <AnimatedMenuIcon isOpen={!isCollapsed} />
         </ListItemButton>
       </ListItem>
       {menuItems.map((item) => (
         <ListItem key={item.text} disablePadding>
           <ListItemButton
             selected={activeView === item.view}
-            onClick={() => setActiveView(item.view)}
+            onClick={() => handleMenuItemClick(item.view)}
             sx={{
               justifyContent: isCollapsed ? "center" : "initial",
             }}
@@ -197,6 +203,7 @@ const DriverDashboard = () => {
           p: 3,
           width: `calc(100% - ${currentDrawerWidth})`,
         }}
+        onClick={isMobile && !isCollapsed ? handleDrawerToggle : undefined}
       >
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           {menuItems.find((item) => item.view === activeView)?.text}
