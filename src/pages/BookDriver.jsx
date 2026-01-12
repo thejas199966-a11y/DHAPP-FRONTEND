@@ -37,9 +37,12 @@ import ArrowForwardIos from "@mui/icons-material/ArrowForwardIos";
 import GridView from "@mui/icons-material/GridView";
 import ViewCarouselOutlined from "@mui/icons-material/ViewCarouselOutlined";
 
+// Custom Vehicle Icons
+import VehicleIcon from "../components/VehicleIcons"; // Ensure the path is correct based on where you created the file
+
 // Redux
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDrivers } from "../features/driverSlice"; // Ensure this matches your slice path
+import { fetchDrivers } from "../features/driverSlice";
 import { showNotification } from "../features/notificationSlice";
 import { useTranslation } from "react-i18next";
 
@@ -236,6 +239,9 @@ export default function BookDriver() {
                   {t("book_driver.hatchback")}
                 </MenuItem>
                 <MenuItem value="LUXURY">{t("book_driver.luxury")}</MenuItem>
+                <MenuItem value="TEMPO">{t("book_driver.tempo")}</MenuItem>
+                <MenuItem value="MINIBUS">{t("book_driver.minibus")}</MenuItem>
+                <MenuItem value="BUS">{t("book_driver.bus")}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -365,14 +371,31 @@ export default function BookDriver() {
                 <Typography variant="h6" fontWeight="bold">
                   {driver.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  {driver.vehicle_type || "Professional Driver"}
-                </Typography>
+
+                {/* --- VEHICLE ICON REPLACEMENT START --- */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: isMobile ? "20px" : "32px",
+                    mt: 1,
+                    mb: 2,
+                  }}
+                >
+                  {/* This replaces the text-based vehicle type display */}
+                  <VehicleIcon
+                    type={driver.vehicle_type}
+                    height={isMobile ? "20px" : "32px"}
+                  />
+                </Box>
+                {/* --- VEHICLE ICON REPLACEMENT END --- */}
+
                 <Stack
                   direction="row"
                   spacing={1}
                   justifyContent="center"
-                  sx={{ my: 2 }}
+                  sx={{ my: 1 }}
                 >
                   <Chip
                     icon={<VerifiedUserIcon />}

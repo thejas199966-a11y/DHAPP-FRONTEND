@@ -9,6 +9,9 @@ const mockTrips = [
   { id: 4, source: 'Delhi', destination: 'Agra', date: '2026-01-18', price: 4500, vehicle_type: 'LUXURY', driver_name: 'Vikram Singh', driver_rating: 5.0, available_seats: 3, status: 'available' },
   { id: 5, source: 'Bangalore', destination: 'Hyderabad', date: '2026-01-20', price: 7000, vehicle_type: 'SUV', driver_name: 'Prakash Reddy', driver_rating: 4.6, available_seats: 5, status: 'available' },
   { id: 6, source: 'Kolkata', destination: 'Durgapur', date: '2026-01-17', price: 3500, vehicle_type: 'SEDAN', driver_name: 'Mithun Chakraborty', driver_rating: 4.8, available_seats: 1, status: 'available' },
+  { id: 7, source: 'Jaipur', destination: 'Udaipur', date: '2026-01-19', price: 4000, vehicle_type: 'TEMPO', driver_name: 'Gopal Verma', driver_rating: 4.5, available_seats: 9, status: 'available' },
+  { id: 8, source: 'Chennai', destination: 'Pondicherry', date: '2026-01-21', price: 2800, vehicle_type: 'MINIBUS', driver_name: 'Karthik Raja', driver_rating: 4.7, available_seats: 12, status: 'available' },
+  { id: 9, source: 'Ahmedabad', destination: 'Surat', date: '2026-01-22', price: 3200, vehicle_type: 'BUS', driver_name: 'Jignesh Patel', driver_rating: 4.6, available_seats: 30, status: 'available' },
 ];
 
 // Async thunk to fetch trips

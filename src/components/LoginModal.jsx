@@ -546,6 +546,9 @@ const LoginModal = () => {
                               <MenuItem value="LUXURY">
                                 {t("login.luxury")}
                               </MenuItem>
+                              <MenuItem value="TEMPO">{t("login.tempo")}</MenuItem>
+                              <MenuItem value="MINIBUS">{t("login.minibus")}</MenuItem>
+                              <MenuItem value="BUS">{t("login.bus")}</MenuItem>
                             </Select>
                           </FormControl>
                         </>

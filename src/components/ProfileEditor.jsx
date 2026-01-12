@@ -161,6 +161,9 @@ const ProfileEditor = ({ profile, status }) => {
                   <MenuItem value="SUV">SUV</MenuItem>
                   <MenuItem value="HATCHBACK">HATCHBACK</MenuItem>
                   <MenuItem value="LUXURY">LUXURY</MenuItem>
+                  <MenuItem value="TEMPO">TEMPO</MenuItem>
+                  <MenuItem value="MINIBUS">MINIBUS</MenuItem>
+                  <MenuItem value="BUS">BUS</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
