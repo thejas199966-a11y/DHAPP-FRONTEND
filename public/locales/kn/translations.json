@@ -34,7 +34,9 @@
     "book_driver_button": "ಚಾಲಕನನ್ನು ಬುಕ್ ಮಾಡಿ",
     "no_drivers_found": "ನಿಮ್ಮ ಮಾನದಂಡಗಳಿಗೆ ಹೊಂದುವ ಯಾವುದೇ ಚಾಲಕರು ಕಂಡುಬಂದಿಲ್ಲ.",
     "clear_filters_button": "ಫಿಲ್ಟರ್‌ಗಳನ್ನು ತೆರವುಗೊಳಿಸಿ",
-    "booking_notification": "ಬುಕಿಂಗ್ ವೈಶಿಷ್ಟ್ಯವು ಮುಂದಿನ ಮಾಡ್ಯೂಲ್‌ನಲ್ಲಿ ಬರುತ್ತಿದೆ!"
+    "booking_notification": "ಬುಕಿಂಗ್ ವೈಶಿಷ್ಟ್ಯವು ಮುಂದಿನ ಮಾಡ್ಯೂಲ್‌ನಲ್ಲಿ ಬರುತ್ತಿದೆ!",
+    "view_all": "View All",
+    "view_carousel": "View Minimized"
   },
   "book_travel": {
     "title": "ನಿಮ್ಮ ಮುಂದಿನ ಪ್ರವಾಸವನ್ನು ಹುಡುಕಿ",

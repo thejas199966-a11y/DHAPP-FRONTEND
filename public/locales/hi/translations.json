@@ -34,7 +34,9 @@
     "book_driver_button": "ड्राइवर बुक करें",
     "no_drivers_found": "आपके मानदंडों से मेल खाने वाले कोई ड्राइवर नहीं मिले।",
     "clear_filters_button": "फ़िल्टर साफ़ करें",
-    "booking_notification": "बुकिंग सुविधा अगले मॉड्यूल में आ रही है!"
+    "booking_notification": "बुकिंग सुविधा अगले मॉड्यूल में आ रही है!",
+    "view_all": "View All",
+    "view_carousel": "View Minimized"
   },
   "book_travel": {
     "title": "अपनी अगली यात्रा खोजें",

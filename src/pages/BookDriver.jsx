@@ -19,19 +19,23 @@ import {
   FormControl,
   InputLabel,
   Stack,
-  Badge,
   Paper,
+  useTheme,
+  useMediaQuery,
+  IconButton,
 } from "@mui/material";
 
 // Icons
 import SearchIcon from "@mui/icons-material/Search";
 import PersonIcon from "@mui/icons-material/Person";
-import LocalPhoneIcon from "@mui/icons-material/LocalPhone";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import StarIcon from "@mui/icons-material/Star";
-import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import WorkHistoryIcon from "@mui/icons-material/WorkHistory";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import ArrowBackIos from "@mui/icons-material/ArrowBackIos";
+import ArrowForwardIos from "@mui/icons-material/ArrowForwardIos";
+import GridView from "@mui/icons-material/GridView";
+import ViewCarouselOutlined from "@mui/icons-material/ViewCarouselOutlined";
 
 // Redux
 import { useDispatch, useSelector } from "react-redux";
@@ -42,18 +46,22 @@ import { useTranslation } from "react-i18next";
 export default function BookDriver() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // 1. Get Data from Redux
+  // --- STATE MANAGEMENT ---
   const { list: drivers, status } = useSelector((state) => state.drivers);
-
-  // 2. Local State for Filtering & Pagination
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("ALL"); // 'All', 'Sedan', 'SUV', etc.
-  const [sortBy, setSortBy] = useState("rating"); // 'rating', 'experience'
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 6;
+  const [filterType, setFilterType] = useState("ALL");
+  const [sortBy, setSortBy] = useState("rating");
+  const [gridPage, setGridPage] = useState(1);
+  const [viewMode, setViewMode] = useState("carousel");
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
-  // 3. Initial Fetch
+  // --- RESPONSIVE & DERIVED VALUES ---
+  const gridItemsPerPage = isMobile ? 12 : 15;
+
+  // --- INITIAL FETCH ---
   useEffect(() => {
     if (status === "idle") {
       dispatch(fetchDrivers());
@@ -63,36 +71,24 @@ export default function BookDriver() {
   // --- LOGIC: FILTERING & SORTING ---
   const filteredDrivers = drivers
     .filter((driver) => {
-      // Search Logic (Name or Phone)
       const matchesSearch =
         driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         driver.phone_number.includes(searchTerm);
-
-      // Category Filter Logic
       const matchesType =
         filterType === "ALL" || driver.vehicle_type === filterType;
-
       return matchesSearch && matchesType;
     })
     .sort((a, b) => {
-      // Sorting Logic
-      if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0); // High to Low
+      if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
       if (sortBy === "experience")
         return (b.experience_years || 0) - (a.experience_years || 0);
       return 0;
     });
 
-  // --- LOGIC: PAGINATION ---
-  const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage);
-  const paginatedDrivers = filteredDrivers.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage
-  );
-
-  // Skeleton Loader (Matches Card Layout)
+  // --- SKELETON LOADER ---
   const renderSkeletons = () =>
-    Array.from(new Array(itemsPerPage)).map((_, index) => (
-      <Grid item key={index} xs={12} sm={6} md={4}>
+    Array.from(new Array(gridItemsPerPage)).map((_, index) => (
+      <Grid item key={index} xs={12} sm={6} md={12 / 5}>
         <Card sx={{ height: "100%", borderRadius: 3, boxShadow: 1 }}>
           <CardContent sx={{ textAlign: "center", p: 3 }}>
             <Skeleton
@@ -233,183 +229,309 @@ export default function BookDriver() {
         </Grid>
       </Paper>
 
-      {/* --- DRIVER GRID --- */}
-      <Grid container spacing={3}>
-        {/* Loading State */}
-        {status === "loading"
-          ? renderSkeletons()
-          : paginatedDrivers.map((driver) => (
-              <Grid item key={driver.id} xs={12} sm={6} md={4}>
-                <Card
-                  component={Link}
-                  to={`/driver/${driver.id}`}
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    transition: "0.3s",
-                    borderRadius: 3,
-                    textDecoration: "none",
-                    color: "inherit",
-                    "&:hover": { transform: "translateY(-5px)", boxShadow: 6 },
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      flexGrow: 1,
-                      textAlign: "center",
-                      position: "relative",
-                    }}
-                  >
-                    {/* Rating Badge (Top Right) */}
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: 16,
-                        right: 16,
-                        display: "flex",
-                        alignItems: "center",
-                        bgcolor: "#fffbf0",
-                        px: 1,
-                        py: 0.5,
-                        borderRadius: 1,
-                        border: "1px solid #ffcd38",
-                      }}
-                    >
-                      <StarIcon
-                        sx={{ color: "#ffb400", fontSize: 18, mr: 0.5 }}
-                      />
-                      <Typography variant="body2" fontWeight="bold">
-                        {driver.rating || "0.0"}
-                      </Typography>
-                    </Box>
-
-                    {/* Avatar */}
-                    <Avatar
-                      sx={{
-                        width: 90,
-                        height: 90,
-                        margin: "0 auto",
-                        mb: 2,
-                        bgcolor: "#e3f2fd",
-                        color: "#1976d2",
-                      }}
-                      src={driver.avatar_url} // If you have images
-                    >
-                      {!driver.avatar_url && (
-                        <PersonIcon style={{ fontSize: 50 }} />
-                      )}
-                    </Avatar>
-
-                    <Typography variant="h6" fontWeight="bold">
-                      {driver.name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
-                    >
-                      {driver.vehicle_type || "Professional Driver"}
-                    </Typography>
-
-                    {/* Badges Row */}
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      justifyContent="center"
-                      sx={{ my: 2 }}
-                    >
-                      <Chip
-                        icon={<VerifiedUserIcon />}
-                        label={t("book_driver.verified")}
-                        size="small"
-                        color="success"
-                        variant="outlined"
-                      />
-                      <Chip
-                        icon={<WorkHistoryIcon />}
-                        label={`${driver.experience_years || 3}+ ${t(
-                          "book_driver.years_abbr"
-                        )}`}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    </Stack>
-
-                    {/* Status Indicator */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        mt: 1,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: "50%",
-                          mr: 1,
-                          bgcolor:
-                            driver.status === "busy"
-                              ? "error.main"
-                              : "success.main",
-                        }}
-                      />
-                      <Typography
-                        variant="caption"
-                        color={
-                          driver.status === "busy"
-                            ? "error.main"
-                            : "success.main"
-                        }
-                        fontWeight="bold"
-                      >
-                        {driver.status === "busy"
-                          ? t("book_driver.status_on_trip")
-                          : t("book_driver.status_available")}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-
-        {/* Empty State */}
-        {status === "succeeded" && filteredDrivers.length === 0 && (
-          <Grid item xs={12}>
-            <Box sx={{ textAlign: "center", py: 8 }}>
-              <Typography variant="h6" color="text.secondary">
-                {t("book_driver.no_drivers_found")}
-              </Typography>
+      {/* --- VIEW TOGGLE --- */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        {filteredDrivers.length > 0 && (
+          <>
+            {viewMode === "carousel" ? (
               <Button
-                sx={{ mt: 2 }}
-                onClick={() => {
-                  setSearchTerm("");
-                  setFilterType("ALL");
+                startIcon={<GridView />}
+                onClick={() => setViewMode("grid")}
+                variant="outlined"
+              >
+                {t("book_driver.view_all")}
+              </Button>
+            ) : (
+              <Button
+                startIcon={<ViewCarouselOutlined />}
+                onClick={() => setViewMode("carousel")}
+                variant="outlined"
+              >
+                {t("book_driver.view_carousel")}
+              </Button>
+            )}
+          </>
+        )}
+      </Box>
+
+      {/* --- DRIVER LISTING (CAROUSEL / GRID) --- */}
+      <Box>
+        {(() => {
+          // --- RENDER LOGIC ---
+          const carouselVisibleItems = isMobile ? 4 : 5;
+
+          const handleCarouselNext = () => {
+            setCarouselIndex((prev) =>
+              Math.min(prev + 1, filteredDrivers.length - carouselVisibleItems)
+            );
+          };
+
+          const handleCarouselPrev = () => {
+            setCarouselIndex((prev) => Math.max(prev - 1, 0));
+          };
+
+          const gridTotalPages = Math.ceil(
+            filteredDrivers.length / gridItemsPerPage
+          );
+          const gridPaginatedDrivers = filteredDrivers.slice(
+            (gridPage - 1) * gridItemsPerPage,
+            gridPage * gridItemsPerPage
+          );
+
+          // Reusable Driver Card Component
+          const DriverCard = ({ driver }) => (
+            <Card
+              component={Link}
+              to={`/driver/${driver.id}`}
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                transition: "0.3s",
+                borderRadius: 3,
+                textDecoration: "none",
+                color: "inherit",
+                "&:hover": { transform: "translateY(-5px)", boxShadow: 6 },
+              }}
+            >
+              <CardContent
+                sx={{
+                  flexGrow: 1,
+                  textAlign: "center",
+                  position: "relative",
+                  p: { xs: 2, md: 3 },
                 }}
               >
-                {t("book_driver.clear_filters_button")}
-              </Button>
-            </Box>
-          </Grid>
-        )}
-      </Grid>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    display: "flex",
+                    alignItems: "center",
+                    bgcolor: "#fffbf0",
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                    border: "1px solid #ffcd38",
+                  }}
+                >
+                  <StarIcon sx={{ color: "#ffb400", fontSize: 18, mr: 0.5 }} />
+                  <Typography variant="body2" fontWeight="bold">
+                    {driver.rating || "0.0"}
+                  </Typography>
+                </Box>
+                <Avatar
+                  sx={{
+                    width: { xs: 70, md: 90 },
+                    height: { xs: 70, md: 90 },
+                    margin: "0 auto",
+                    mb: 2,
+                    bgcolor: "#e3f2fd",
+                    color: "#1976d2",
+                  }}
+                  src={driver.avatar_url}
+                >
+                  {!driver.avatar_url && (
+                    <PersonIcon sx={{ fontSize: { xs: 40, md: 50 } }} />
+                  )}
+                </Avatar>
+                <Typography variant="h6" fontWeight="bold">
+                  {driver.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {driver.vehicle_type || "Professional Driver"}
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="center"
+                  sx={{ my: 2 }}
+                >
+                  <Chip
+                    icon={<VerifiedUserIcon />}
+                    label={t("book_driver.verified")}
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                  />
+                  <Chip
+                    icon={<WorkHistoryIcon />}
+                    label={`${driver.experience_years || 3}+ ${t(
+                      "book_driver.years_abbr"
+                    )}`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                </Stack>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mt: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      mr: 1,
+                      bgcolor:
+                        driver.status === "busy"
+                          ? "error.main"
+                          : "success.main",
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    color={
+                      driver.status === "busy" ? "error.main" : "success.main"
+                    }
+                    fontWeight="bold"
+                  >
+                    {driver.status === "busy"
+                      ? t("book_driver.status_on_trip")
+                      : t("book_driver.status_available")}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          );
 
-      {/* --- PAGINATION --- */}
-      {filteredDrivers.length > 0 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(e, value) => setPage(value)}
-            color="primary"
-            size="large"
-          />
-        </Box>
-      )}
+          if (status === "loading") {
+            return (
+              <Grid container spacing={3}>
+                {renderSkeletons()}
+              </Grid>
+            );
+          }
+
+          if (status === "succeeded" && filteredDrivers.length === 0) {
+            return (
+              <Box sx={{ textAlign: "center", py: 8 }}>
+                <Typography variant="h6" color="text.secondary">
+                  {t("book_driver.no_drivers_found")}
+                </Typography>
+                <Button
+                  sx={{ mt: 2 }}
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilterType("ALL");
+                  }}
+                >
+                  {t("book_driver.clear_filters_button")}
+                </Button>
+              </Box>
+            );
+          }
+
+          if (viewMode === "carousel") {
+            return (
+              <Box sx={{ position: "relative" }}>
+                <Box
+                  sx={{
+                    overflow: "hidden",
+                    position: "relative",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 3,
+                      transition: "transform 0.5s ease-in-out",
+                      transform: `translateX(calc(-${carouselIndex} * (100% / ${carouselVisibleItems} + ${
+                        24 / carouselVisibleItems
+                      }px)))`,
+                    }}
+                  >
+                    {filteredDrivers.map((driver) => (
+                      <Box
+                        key={driver.id}
+                        sx={{
+                          minWidth: `calc(100% / ${carouselVisibleItems} - 24px * (${
+                            carouselVisibleItems - 1
+                          }) / ${carouselVisibleItems})`,
+                          flex: "0 0 auto",
+                        }}
+                      >
+                        <DriverCard driver={driver} />
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+                {/* Carousel Controls */}
+                <IconButton
+                  onClick={handleCarouselPrev}
+                  disabled={carouselIndex === 0}
+                  sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: -24,
+                    transform: "translateY(-50%)",
+                    bgcolor: "white",
+                    boxShadow: 3,
+                    "&:hover": { bgcolor: "grey.200" },
+                    zIndex: 2,
+                  }}
+                >
+                  <ArrowBackIos />
+                </IconButton>
+                <IconButton
+                  onClick={handleCarouselNext}
+                  disabled={
+                    carouselIndex >=
+                    filteredDrivers.length - carouselVisibleItems
+                  }
+                  sx={{
+                    position: "absolute",
+                    top: "50%",
+                    right: -24,
+                    transform: "translateY(-50%)",
+                    bgcolor: "white",
+                    boxShadow: 3,
+                    "&:hover": { bgcolor: "grey.200" },
+                    zIndex: 2,
+                  }}
+                >
+                  <ArrowForwardIos />
+                </IconButton>
+              </Box>
+            );
+          }
+
+          if (viewMode === "grid") {
+            return (
+              <Box>
+                <Grid container spacing={3}>
+                  {gridPaginatedDrivers.map((driver) => (
+                    <Grid
+                      item
+                      key={driver.id}
+                      xs={12}
+                      sm={6}
+                      md={12 / 5} /* 5 items per row on medium screens */
+                    >
+                      <DriverCard driver={driver} />
+                    </Grid>
+                  ))}
+                </Grid>
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
+                  <Pagination
+                    count={gridTotalPages}
+                    page={gridPage}
+                    onChange={(e, value) => setGridPage(value)}
+                    color="primary"
+                    size="large"
+                  />
+                </Box>
+              </Box>
+            );
+          }
+        })()}
+      </Box>
     </Container>
   );
 }

@@ -34,7 +34,9 @@
     "book_driver_button": "Book Driver",
     "no_drivers_found": "No drivers found matching your criteria.",
     "clear_filters_button": "Clear Filters",
-    "booking_notification": "Booking Feature coming in next module!"
+    "booking_notification": "Booking Feature coming in next module!",
+    "view_all": "View All",
+    "view_carousel": "View Minimized"
   },
   "book_travel": {
     "title": "Find Your Next Trip",

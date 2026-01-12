@@ -28,10 +28,17 @@ import { showNotification } from "../features/notificationSlice";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { closeLoginModal } from "../features/authModalSlice";
-import user_media from "../assets/videos/user_login_signup.mp4";
+import user_media_mp4 from "../assets/videos/user_login_signup.mp4";
+import user_media_webm from "../assets/videos/user_login_signup.webm";
+import user_media_poster from "../assets/videos/user_login_signup.jpg";
+
 // NOTE: You can replace these with specific videos for each role
-import driver_media from "../assets/videos/user_login_signup.mp4";
-import org_media from "../assets/videos/user_login_signup.mp4";
+// For now, we are using the same video for all roles.
+const videoSources = {
+  mp4: user_media_mp4,
+  webm: user_media_webm,
+  poster: user_media_poster,
+};
 
 // Icons
 import PersonIcon from "@mui/icons-material/Person";
@@ -115,19 +122,19 @@ const LoginModal = () => {
       id: "user",
       label: t("login.user_role"),
       icon: PersonIcon,
-      videoSrc: user_media,
+      videoSrc: videoSources,
     },
     {
       id: "driver",
       label: t("login.driver_role"),
       icon: DirectionsCarIcon,
-      videoSrc: driver_media,
+      videoSrc: videoSources,
     },
     {
       id: "organisation",
       label: t("login.org_role"),
       icon: BusinessIcon,
-      videoSrc: org_media,
+      videoSrc: videoSources,
     },
   ];
 
@@ -168,6 +175,7 @@ const LoginModal = () => {
 
   const handleClose = () => {
     if (loading) return;
+    setRole("user");
     dispatch(closeLoginModal());
   };
 
@@ -323,11 +331,12 @@ const LoginModal = () => {
                         {/* Background Video (Only visible when active) */}
                         {isActive && (
                           <video
-                            key={item.videoSrc} // Add key to force re-render on src change
+                            key={item.videoSrc.mp4} // Re-mount video when source changes
                             autoPlay
                             loop
                             muted
                             playsInline
+                            poster={item.videoSrc.poster}
                             style={{
                               position: "absolute",
                               top: 0,
@@ -339,10 +348,15 @@ const LoginModal = () => {
                               opacity: 0.8,
                             }}
                           >
-                            <source src={item.videoSrc} type="video/mp4" />
+                            {/* Provide WebM for better compression */}
+                            <source
+                              src={item.videoSrc.webm}
+                              type="video/webm"
+                            />
+                            {/* Fallback to MP4 */}
+                            <source src={item.videoSrc.mp4} type="video/mp4" />
                           </video>
                         )}
-
                         {/* Optional Overlay to improve text contrast on video */}
                         {isActive && (
                           <Box
