@@ -56,7 +56,7 @@ function App() {
               }
             />
             <Route
-              path="/driver/:id"
+              path="/driver-detail"
               element={
                 <ProtectedRoute>
                   <DriverDetailPage />

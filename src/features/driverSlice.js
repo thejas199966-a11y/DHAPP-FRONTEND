@@ -15,6 +15,15 @@ export const fetchDrivers = createAsyncThunk(
   async () => {
     const response = await axios.get(`${API_BASE_URL}/drivers/`);
     return response?.data || [];
+  },
+  {
+    condition: (_, { getState }) => {
+      const { status } = getState().drivers;
+      if (status === "loading") {
+        return false;
+      }
+      return true;
+    },
   }
 );
 

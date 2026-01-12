@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchDriverById,
@@ -24,8 +24,12 @@ import {
 import StarIcon from "@mui/icons-material/Star";
 
 const DriverDetailPage = () => {
-  const { id } = useParams();
+  const { state } = useLocation();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const driverId = state?.driver?.id;
+
   const {
     details,
     detailsStatus,
@@ -36,20 +40,25 @@ const DriverDetailPage = () => {
   } = useSelector((state) => state.drivers);
 
   useEffect(() => {
-    if (id) {
-      dispatch(fetchDriverById(id));
-      dispatch(fetchDriverReviews({ driverId: id, page: 1 }));
+    if (driverId) {
+      dispatch(fetchDriverById(driverId));
+      dispatch(fetchDriverReviews({ driverId: driverId, page: 1 }));
+    } else {
+      // If no ID is present in state (e.g., direct navigation), redirect.
+      navigate("/book-driver");
     }
 
     // Cleanup on unmount
     return () => {
       dispatch(resetDriverDetails());
     };
-  }, [id, dispatch]);
+  }, [driverId, dispatch, navigate]);
 
   const handleLoadMore = () => {
-    if (hasMoreReviews) {
-      dispatch(fetchDriverReviews({ driverId: id, page: reviewsPage + 1 }));
+    if (hasMoreReviews && driverId) {
+      dispatch(
+        fetchDriverReviews({ driverId: driverId, page: reviewsPage + 1 })
+      );
     }
   };
 
@@ -62,7 +71,8 @@ const DriverDetailPage = () => {
     );
   };
 
-  if (detailsStatus === "loading") {
+  // Render a loader while waiting for redirect or initial data
+  if (!driverId || (detailsStatus === "loading" && !details)) {
     return (
       <Container sx={{ textAlign: "center", mt: 10 }}>
         <CircularProgress />
@@ -73,7 +83,9 @@ const DriverDetailPage = () => {
   if (detailsStatus === "failed" || !details) {
     return (
       <Container sx={{ mt: 10 }}>
-        <Alert severity="error">Driver not found or an error occurred.</Alert>
+        <Alert severity="error">
+          Could not load driver details. Please return to the previous page.
+        </Alert>
       </Container>
     );
   }

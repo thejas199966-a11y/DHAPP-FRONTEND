@@ -63,10 +63,8 @@ export default function BookDriver() {
 
   // --- INITIAL FETCH ---
   useEffect(() => {
-    if (status === "idle") {
-      dispatch(fetchDrivers());
-    }
-  }, [status, dispatch]);
+    dispatch(fetchDrivers());
+  }, []);
 
   // --- LOGIC: FILTERING & SORTING ---
   const filteredDrivers = drivers
@@ -282,7 +280,8 @@ export default function BookDriver() {
           const DriverCard = ({ driver }) => (
             <Card
               component={Link}
-              to={`/driver/${driver.id}`}
+              to="/driver-detail"
+              state={{ driver: driver }}
               sx={{
                 height: "100%",
                 display: "flex",
