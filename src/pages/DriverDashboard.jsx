@@ -23,7 +23,6 @@ import { fetchDriverProfile } from "../features/driverSlice";
 import { fetchDriverBookings, updateTripStatus } from "../features/tripSlice";
 import { showNotification } from "../features/notificationSlice";
 
-import ProfileEditor from "../components/ProfileEditor";
 import BookingRequests from "../components/BookingRequests";
 import DashboardHome from "../components/DashboardHome";
 import AnimatedMenuIcon from "../components/AnimatedMenuIcon";
@@ -40,7 +39,7 @@ const DriverDashboard = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [activeView, setActiveView] = useState("home");
-  const [isCollapsed, setIsCollapsed] = useState(isMobile); // Collapse by default on mobile
+  const [isCollapsed, setIsCollapsed] = useState(true); // Collapse by default on mobile
 
   const { profile, profileStatus } = useSelector((state) => state.drivers);
   const { bookings, status: bookingsStatus } = useSelector(
@@ -86,7 +85,6 @@ const DriverDashboard = () => {
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, view: "home" },
-    { text: "My Profile", icon: <PersonIcon />, view: "profile" },
     { text: "Booking Requests", icon: <BookOnlineIcon />, view: "bookings" },
   ];
 
@@ -160,8 +158,6 @@ const DriverDashboard = () => {
     switch (activeView) {
       case "home":
         return <DashboardHome />;
-      case "profile":
-        return <ProfileEditor profile={profile} status={profileStatus} />;
       case "bookings":
         const pendingBookings = bookings.filter((b) => b.status === "pending");
         return (

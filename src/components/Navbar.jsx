@@ -34,6 +34,7 @@ import { setLanguage } from "../features/languageSlice";
 import { logout } from "../features/authSlice";
 import { toggleTheme } from "../features/themeSlice";
 import { openLoginModal } from "../features/authModalSlice";
+import ProfileModal from "./ProfileModal";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
@@ -48,6 +49,7 @@ const Navbar = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const handleOpenMenu = (event) => setAnchorEl(event.currentTarget);
   const handleCloseMenu = () => setAnchorEl(null);
@@ -55,6 +57,15 @@ const Navbar = () => {
     setProfileAnchorEl(event.currentTarget);
   const handleCloseProfileMenu = () => setProfileAnchorEl(null);
   const toggleDrawer = (open) => () => setDrawerOpen(open);
+
+  const handleOpenProfileModal = () => {
+    setProfileModalOpen(true);
+    handleCloseProfileMenu();
+  };
+
+  const handleCloseProfileModal = () => {
+    setProfileModalOpen(false);
+  };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -139,6 +150,7 @@ const Navbar = () => {
             onClose={handleCloseProfileMenu}
             PaperProps={{ elevation: 4, sx: { mt: 1.5, minWidth: 150 } }}
           >
+            <MenuItem onClick={handleOpenProfileModal}>View Profile</MenuItem>
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </Menu>
         </Box>
@@ -184,6 +196,12 @@ const Navbar = () => {
                     <AccountCircleIcon />
                   </ListItemIcon>
                   <ListItemText primary={user.name} />
+                </ListItem>
+                <ListItem button onClick={handleOpenProfileModal}>
+                  <ListItemIcon>
+                    <AccountCircleIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="View Profile" />
                 </ListItem>
                 <ListItem button onClick={handleLogout}>
                   <ListItemIcon>
@@ -259,6 +277,12 @@ const Navbar = () => {
 
         {isMobile ? renderMobileMenu() : renderDesktopMenu()}
       </Toolbar>
+      {user && (
+        <ProfileModal
+          open={profileModalOpen}
+          onClose={handleCloseProfileModal}
+        />
+      )}
     </AppBar>
   );
 };
