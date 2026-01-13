@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Box } from "@mui/material";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { useDispatch } from "react-redux";
+import { fetchInitialLocation } from "../features/locationSlice";
 
 const MainLayout = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchInitialLocation());
+  }, [dispatch]);
+
   return (
     <Box
       sx={{

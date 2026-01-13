@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Container,
   Grid,
   TextField,
-  Button,
   Typography,
   Paper,
   Box,
   InputAdornment,
   IconButton,
-  CircularProgress,
   Skeleton,
   useTheme,
   useMediaQuery,
@@ -136,8 +134,15 @@ const RecenterControl = ({
 export default function TripPlanner() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { tripData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
+
+  const { tripData } = useSelector((state) => state.user);
+  const {
+    initialLocation,
+    initialAddress,
+    loading: locationLoading,
+    error: locationError,
+  } = useSelector((state) => state.location);
 
   const [formData, setFormData] = useState({
     startPoint: "",
@@ -153,80 +158,26 @@ export default function TripPlanner() {
   // Map State
   const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
   const [routePositions, setRoutePositions] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const getPreciseLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      dispatch(
-        showNotification({
-          message: "Geolocation is not supported by your browser",
-          severity: "error",
-        })
-      );
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const userCoords = { lat: latitude, lng: longitude };
-        setMapCenter([latitude, longitude]);
-
-        try {
-          const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
-          const res = await axios.get(url);
-          const exactAddress = res.data.display_name;
-          setFormData((prev) => ({
-            ...prev,
-            startCoords: userCoords,
-            startPoint: exactAddress,
-          }));
-          if (formData.destination) {
-            await handleSearchLocation("end");
-          }
-        } catch (error) {
-          console.error("Error finding address:", error);
-          setFormData((prev) => ({
-            ...prev,
-            startCoords: userCoords,
-            startPoint: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-          }));
-        } finally {
-          setLoading(false);
-        }
-      },
-      (error) => {
-        console.error("Location denied or error:", error);
-        const defaultCoords = { lat: 12.9716, lng: 77.5946 };
-        setMapCenter([defaultCoords.lat, defaultCoords.lng]);
-        setFormData((prev) => ({
-          ...prev,
-          startCoords: defaultCoords,
-          startPoint: "Bengaluru, India",
-        }));
-        dispatch(
-          showNotification({
-            message:
-              "Could not detect location. Defaulted to Bengaluru, India.",
-            severity: "info",
-          })
-        );
-        setLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }, [formData.destination]);
+  const loading = locationLoading === "pending" || locationLoading === "idle";
 
   useEffect(() => {
-    // Only fetch precise location if it hasn't been determined yet.
-    if (!formData.startCoords) {
-      getPreciseLocation();
+    if (locationError) {
+      dispatch(
+        showNotification({
+          message: locationError,
+          severity: "info",
+        })
+      );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (initialLocation && initialAddress) {
+      setMapCenter([initialLocation.lat, initialLocation.lng]);
+      setFormData((prev) => ({
+        ...prev,
+        startCoords: initialLocation,
+        startPoint: initialAddress,
+      }));
+    }
+  }, [initialLocation, initialAddress, locationError]);
 
   useEffect(() => {
     dispatch(setTripData(formData));
@@ -321,7 +272,7 @@ export default function TripPlanner() {
         }));
       }
     } catch (error) {
-      console.error("Reverse Geocode Error", error);
+      // console.error("Reverse Geocode Error", error);
       if (type === "start") {
         setFormData((prev) => ({ ...prev, startCoords: newCoords }));
       } else {
