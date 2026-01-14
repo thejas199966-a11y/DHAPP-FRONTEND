@@ -211,7 +211,7 @@ const AnimatedDriverButton = ({ t, isMobile }) => {
         fontSize: isMobile ? "1rem" : "1.4rem",
         borderRadius: 3,
         textTransform: "none",
-        backgroundColor: "primary.main",
+        backgroundColor: "text.primary",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -231,7 +231,7 @@ const AnimatedDriverButton = ({ t, isMobile }) => {
           zIndex: 30,
           position: "relative",
           textAlign: "center",
-          color: "text.primary",
+          color: "white",
         }}
       >
         {t("dashboard.book_driver")}
@@ -251,7 +251,7 @@ const AnimatedDriverButton = ({ t, isMobile }) => {
           mt: 0.5,
           zIndex: 30,
           opacity: isAnimating ? 0 : 1,
-          color: "text.primary",
+          color: "white",
         }}
       />
 

@@ -317,7 +317,7 @@ const AnimatedTravelButton = ({ t, isMobile }) => {
         fontSize: isMobile ? "1rem" : "1.4rem",
         borderRadius: 3,
         textTransform: "none",
-        backgroundColor: "primary.main",
+        backgroundColor: "black",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -337,7 +337,7 @@ const AnimatedTravelButton = ({ t, isMobile }) => {
           zIndex: 20,
           position: "relative",
           textAlign: "center",
-          color: "text.primary",
+          color: "white",
         }}
       >
         {t("dashboard.book_travel")}
@@ -357,7 +357,7 @@ const AnimatedTravelButton = ({ t, isMobile }) => {
           mt: 0.5,
           zIndex: 20,
           opacity: isAnimating ? 0 : 1,
-          color: "text.primary",
+          color: "white",
         }}
       />
 

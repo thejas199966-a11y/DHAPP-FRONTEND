@@ -117,13 +117,14 @@ const Dashboard = () => {
           {/* xs={12} = Full width on Mobile
               md={6} = Half width on Desktop/Tablet landscape
           */}
-          <Grid item xs={12} md={6}>
+          {/* Disabled as the functionality is not yet developed */}
+          {/* <Grid item xs={12} md={6}>
             <AnimatedTravelButton
               t={t}
               navigate={navigate}
               isMobile={isMobile}
             />
-          </Grid>
+          </Grid> */}
 
           <Grid item xs={12} md={6}>
             <AnimatedDriverButton
