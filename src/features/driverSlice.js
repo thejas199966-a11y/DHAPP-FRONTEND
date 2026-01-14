@@ -8,8 +8,17 @@ const getToken = (thunkAPI) => {
   return thunkAPI.getState().auth.token;
 };
 
-// --- Async Thunks ---
+// Helper to convert base64 to a Blob
+const dataURLtoBlob = (dataurl) => {
+    let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+}
 
+// --- Async Thunks ---
 export const fetchDrivers = createAsyncThunk(
   "drivers/fetchDrivers",
   async () => {
@@ -57,6 +66,24 @@ export const updateDriverProfile = createAsyncThunk(
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+    return response.data;
+  }
+);
+
+export const uploadDriverProfilePicture = createAsyncThunk(
+  "drivers/uploadDriverProfilePicture",
+  async (croppedImage, thunkAPI) => {
+    const token = getToken(thunkAPI);
+    const blob = dataURLtoBlob(croppedImage);
+    const formData = new FormData();
+    formData.append("file", blob, "profile.png");
+
+    const response = await axios.put(`${API_BASE_URL}/drivers/me/profile-picture`, formData, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 );
@@ -148,6 +175,18 @@ const driverSlice = createSlice({
       })
       .addCase(updateDriverProfile.rejected, (state) => {
         state.profileStatus = "failed";
+      })
+      // uploadDriverProfilePicture
+      .addCase(uploadDriverProfilePicture.pending, (state) => {
+        state.profileStatus = 'loading';
+      })
+      .addCase(uploadDriverProfilePicture.fulfilled, (state, action) => {
+        state.profileStatus = 'succeeded';
+        state.profile = action.payload;
+      })
+      .addCase(uploadDriverProfilePicture.rejected, (state) => {
+        state.profileStatus = 'failed';
+        state.error = action.error.message;
       })
       // fetchDriverReviews
       .addCase(fetchDriverReviews.pending, (state) => {

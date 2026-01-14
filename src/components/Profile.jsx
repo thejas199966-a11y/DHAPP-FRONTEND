@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -10,13 +10,25 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
+  Avatar,
+  IconButton,
+  Modal,
 } from "@mui/material";
+import { PhotoCamera } from "@mui/icons-material";
 import {
   fetchDriverProfile,
   updateDriverProfile,
+  uploadDriverProfilePicture,
 } from "../features/driverSlice";
-import { fetchUserProfile, updateUserProfile } from "../features/userSlice";
+import {
+  fetchUserProfile,
+  updateUserProfile,
+  uploadUserProfilePicture,
+} from "../features/userSlice";
 import { showNotification } from "../features/notificationSlice";
+import ImageCropper from "./ImageCropper";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Profile = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -34,6 +46,10 @@ const Profile = ({ onClose }) => {
 
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const fileInputRef = useRef(null);
+  const [pfp, setPfp] = useState(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -48,12 +64,50 @@ const Profile = ({ onClose }) => {
   useEffect(() => {
     if (profileData) {
       setFormData(profileData);
+      setPfp(profileData?.profile_picture_url || profileData?.avatar_url);
     }
   }, [profileData]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setIsEdited(true);
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setSelectedImage(reader.result);
+        setCropperOpen(true);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = null;
+    }
+  };
+
+  const handleCrop = async (croppedImageUrl) => {
+    setCropperOpen(false);
+    try {
+      if (role === "driver") {
+        await dispatch(uploadDriverProfilePicture(croppedImageUrl)).unwrap();
+      } else {
+        await dispatch(uploadUserProfilePicture(croppedImageUrl)).unwrap();
+      }
+      dispatch(
+        showNotification({
+          message: "Profile picture updated successfully!",
+          severity: "success",
+        })
+      );
+    } catch (error) {
+      dispatch(
+        showNotification({
+          message: "Failed to upload profile picture.",
+          severity: "error",
+        })
+      );
+    }
   };
 
   const handleSave = async () => {
@@ -231,6 +285,45 @@ const Profile = ({ onClose }) => {
       </Typography>
 
       <Grid container spacing={2} display={"flex"} flexDirection={"column"}>
+        <Grid
+          item
+          xs={12}
+          sx={{ display: "flex", justifyContent: "center", mb: 2 }}
+        >
+          <Box sx={{ position: "relative" }}>
+            <Avatar
+              src={`${API_BASE_URL}${pfp}`}
+              sx={{ width: 120, height: 120 }}
+            >
+              {/* Fallback to first letter of name */}
+              {formData.name ? formData.name.charAt(0) : ""}
+            </Avatar>
+            <IconButton
+              color="primary"
+              aria-label="upload picture"
+              component="span"
+              sx={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                backgroundColor: "rgba(255, 255, 255, 0.7)",
+              }}
+              onClick={() =>
+                fileInputRef.current && fileInputRef.current.click()
+              }
+            >
+              <PhotoCamera />
+            </IconButton>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={handleFileSelect}
+            />
+          </Box>
+        </Grid>
+
         {/* --- Common Field(s) --- */}
         <Grid item xs={12} md={6}>
           <TextField
@@ -443,6 +536,28 @@ const Profile = ({ onClose }) => {
           )}
         </Button>
       </Box>
+
+      <Modal open={cropperOpen} onClose={() => setCropperOpen(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+          }}
+        >
+          {selectedImage && (
+            <ImageCropper
+              imageSrc={selectedImage}
+              onCrop={handleCrop}
+              onClose={() => setCropperOpen(false)}
+            />
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 };
