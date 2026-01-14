@@ -1,28 +1,34 @@
 import React from "react";
 import { Box, Typography, Container, Grid, Link } from "@mui/material";
 import FacebookIcon from "@mui/icons-material/Facebook";
-import TwitterIcon from "@mui/icons-material/Twitter";
+import XIcon from "@mui/icons-material/X";
 import InstagramIcon from "@mui/icons-material/Instagram";
 
 const Footer = () => {
   return (
     <Box
       component="footer"
-      sx={{ py: 3, px: 2, mt: "auto", backgroundColor: "#e3d8d8ff" }}
+      sx={{
+        py: 3,
+        px: 2,
+        mt: "auto",
+        backgroundColor: "rgb(0, 0, 0)",
+        color: "white",
+      }}
     >
       <Container maxWidth="lg">
         <Grid container spacing={4} justifyContent="space-between">
           <Grid item xs={12} sm={6}>
-            <Typography variant="h6" color="text.primary" gutterBottom>
+            <Typography variant="h6" color="white" gutterBottom>
               Contact Us
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="white">
               Bangalore, India
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="white">
               Email: support@dhire.com
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="white">
               Phone: +91 82967 89262
             </Typography>
           </Grid>
@@ -34,7 +40,7 @@ const Footer = () => {
               <FacebookIcon />
             </Link>
             <Link href="#" color="inherit" sx={{ mr: 1 }}>
-              <TwitterIcon />
+              <XIcon />
             </Link>
             <Link href="#" color="inherit">
               <InstagramIcon />

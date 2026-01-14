@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import {
   Modal,
   Box,
@@ -7,11 +7,9 @@ import {
   IconButton,
   Grid,
   TextField,
-  Button,
-  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { showNotification } from "../features/notificationSlice";
+import Profile from "./Profile"; // Import the newly created component
 
 const modalStyle = {
   position: "absolute",
@@ -34,67 +32,14 @@ const modalStyle = {
 const navItems = ["Profile", "Account settings", "Data & privacy", "Security"];
 
 const AccountModal = ({ open, onClose }) => {
-  const { user, token } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const [activeView, setActiveView] = useState("Profile");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    full_name: "",
-  });
-
-  const VITE_API_URL = import.meta.env.VITE_API_BASE_URL;
-
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        full_name: user.full_name || user.name || "",
-      });
-    }
-  }, [user]);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    setError(null);
-    const endpoint =
-      user.role === "driver"
-        ? `${VITE_API_URL}/drivers/me`
-        : `${VITE_API_URL}/users/me`;
-    try {
-      const response = await fetch(endpoint, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.detail || "Failed to update profile");
-      }
-      dispatch(
-        showNotification({
-          message: "Profile updated successfully!",
-          severity: "success",
-        })
-      );
-      onClose();
-    } catch (err) {
-      setError(err.message);
-      dispatch(showNotification({ message: err.message, severity: "error" }));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const renderContent = () => {
-    // Content rendering logic remains the same
     switch (activeView) {
+      case "Profile":
+        // Render the new component
+        return <Profile onClose={onClose} />;
       case "Account settings":
         return (
           <Box>
@@ -124,48 +69,10 @@ const AccountModal = ({ open, onClose }) => {
                   variant="filled"
                   InputProps={{ style: { color: "#ccc" } }}
                   InputLabelProps={{ style: { color: "#ccc" } }}
-                  sx={{ display: "none" }} // Hidden as requested
+                  sx={{ display: "none" }}
                 />
               </Grid>
             </Grid>
-          </Box>
-        );
-      case "Profile":
-        return (
-          <Box>
-            <Typography variant="h5" sx={{ mb: 3 }}>
-              Profile
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="full_name"
-                  label="Full Name"
-                  value={formData.full_name}
-                  onChange={handleChange}
-                  variant="filled"
-                  InputProps={{ style: { color: "white" } }}
-                  InputLabelProps={{ style: { color: "#ccc" } }}
-                />
-              </Grid>
-            </Grid>
-            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-              <Button
-                variant="contained"
-                onClick={handleSave}
-                disabled={loading}
-                sx={{
-                  backgroundColor: "#1d1e1e",
-                  color: "white",
-                  "&:hover": {
-                    backgroundColor: "#080808",
-                  },
-                }}
-              >
-                {loading ? <CircularProgress size={24} /> : "Save Changes"}
-              </Button>
-            </Box>
           </Box>
         );
       case "Data & privacy":
@@ -244,12 +151,12 @@ const AccountModal = ({ open, onClose }) => {
             gap: 20px;
             padding: 15px 20px;
             overflow-x: auto;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
           }
 
           .account-modal-nav::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, and Opera */
+            display: none;
           }
           
           .nav-item {
