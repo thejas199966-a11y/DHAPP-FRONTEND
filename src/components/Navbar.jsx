@@ -242,7 +242,18 @@ const Navbar = () => {
                 size="large"
                 sx={iconHoverSx} // Apply circular shine
               >
-                <MenuIcon />
+                <Avatar
+                  alt={user.name}
+                  src={user.picture || "https://via.placeholder.com/40?text=U"}
+                  sx={{
+                    width: 35,
+                    height: 35,
+                    border: "1px solid white",
+                    color: "white",
+                    backgroundColor: "black",
+                    zIndex: 2,
+                  }}
+                />
               </IconButton>
               {/* Drawer Content */}
               <Drawer
