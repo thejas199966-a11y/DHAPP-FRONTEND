@@ -34,7 +34,7 @@ import { setLanguage } from "../features/languageSlice";
 import { logout } from "../features/authSlice";
 import { toggleTheme } from "../features/themeSlice";
 import { openLoginModal } from "../features/authModalSlice";
-import ProfileModal from "./ProfileModal";
+import AccountModal from "./AccountModal";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
@@ -49,7 +49,7 @@ const Navbar = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
 
   // --- Handlers ---
   const handleOpenMenu = (event) => setAnchorEl(event.currentTarget);
@@ -58,11 +58,11 @@ const Navbar = () => {
     setProfileAnchorEl(event.currentTarget);
   const handleCloseProfileMenu = () => setProfileAnchorEl(null);
   const toggleDrawer = (open) => () => setDrawerOpen(open);
-  const handleOpenProfileModal = () => {
-    setProfileModalOpen(true);
+  const handleOpenAccountModal = () => {
+    setAccountModalOpen(true);
     handleCloseProfileMenu();
   };
-  const handleCloseProfileModal = () => setProfileModalOpen(false);
+  const handleCloseAccountModal = () => setAccountModalOpen(false);
   const handleLogout = () => {
     dispatch(logout());
     handleCloseProfileMenu();
@@ -264,8 +264,8 @@ const Navbar = () => {
                     <Divider />
                     {user ? (
                       <>
-                        <ListItem button onClick={handleOpenProfileModal}>
-                          <ListItemText primary="View Profile" />
+                        <ListItem button onClick={handleOpenAccountModal}>
+                          <ListItemText primary="Account" />
                         </ListItem>
                         <ListItem button onClick={handleLogout}>
                           <ListItemText primary="Logout" />
@@ -373,8 +373,8 @@ const Navbar = () => {
                       sx: { mt: 1.5, minWidth: 150 },
                     }}
                   >
-                    <MenuItem onClick={handleOpenProfileModal}>
-                      View Profile
+                    <MenuItem onClick={handleOpenAccountModal}>
+                      Account
                     </MenuItem>
                     <MenuItem onClick={handleLogout}>Logout</MenuItem>
                   </Menu>
@@ -393,9 +393,9 @@ const Navbar = () => {
           )}
         </Toolbar>
         {user && (
-          <ProfileModal
-            open={profileModalOpen}
-            onClose={handleCloseProfileModal}
+          <AccountModal
+            open={accountModalOpen}
+            onClose={handleCloseAccountModal}
           />
         )}
       </AppBar>
