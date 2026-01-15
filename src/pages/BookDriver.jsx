@@ -349,7 +349,7 @@ export default function BookDriver() {
                   )}
                 </Avatar>
                 <Typography variant="h6" fontWeight="bold">
-                  {driver.name}
+                  {driver?.name}
                 </Typography>
 
                 {/* --- VEHICLE ICON REPLACEMENT START --- */}

@@ -243,8 +243,8 @@ const Navbar = () => {
                 sx={iconHoverSx} // Apply circular shine
               >
                 <Avatar
-                  alt={user.name}
-                  src={user.picture || "https://via.placeholder.com/40?text=U"}
+                  alt={user?.name}
+                  src={user?.picture || "https://via.placeholder.com/40?text=U"}
                   sx={{
                     width: 35,
                     height: 35,
@@ -270,7 +270,7 @@ const Navbar = () => {
                   {/* ... (Drawer content remains standard list, no shine needed inside drawer usually) ... */}
                   <List>
                     <ListItem>
-                      <Typography variant="h6">{user.name}</Typography>
+                      <Typography variant="h6">{user?.name}</Typography>
                     </ListItem>
                     <Divider />
                     {user ? (
@@ -359,9 +359,9 @@ const Navbar = () => {
                     >
                       {/* Adjusted Avatar to fit inside the circular mask */}
                       <Avatar
-                        alt={user.name}
+                        alt={user?.name}
                         src={
-                          user.picture ||
+                          user?.picture ||
                           "https://via.placeholder.com/40?text=U"
                         }
                         sx={{

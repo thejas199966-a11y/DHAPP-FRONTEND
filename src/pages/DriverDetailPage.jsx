@@ -101,10 +101,10 @@ const DriverDetailPage = () => {
                 <Avatar
                   sx={{ width: 80, height: 80, mr: 2, bgcolor: "primary.main" }}
                 >
-                  {details.name.charAt(0)}
+                  {details?.name.charAt(0)}
                 </Avatar>
                 <div>
-                  <Typography variant="h4">{details.name}</Typography>
+                  <Typography variant="h4">{details?.name}</Typography>
                   <Box
                     sx={{
                       display: "flex",

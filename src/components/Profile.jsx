@@ -296,7 +296,7 @@ const Profile = ({ onClose }) => {
               sx={{ width: 120, height: 120 }}
             >
               {/* Fallback to first letter of name */}
-              {formData.name ? formData.name.charAt(0) : ""}
+              {formData?.name ? formData.name?.charAt(0) : ""}
             </Avatar>
             <IconButton
               color="primary"
@@ -331,7 +331,7 @@ const Profile = ({ onClose }) => {
             label={role === "driver" ? "Name" : "Full Name"}
             name={role === "driver" ? "name" : "full_name"}
             value={
-              role === "driver" ? formData.name || "" : formData.full_name || ""
+              role === "driver" ? formData?.name || "" : formData?.full_name || ""
             }
             onChange={handleChange}
             variant="filled"
