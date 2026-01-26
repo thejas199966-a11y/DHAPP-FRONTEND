@@ -3,133 +3,183 @@ import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Async thunk to create a new trip (booking)
+// Helper to get config
+const getAuthConfig = (getState) => {
+  const token = getState().auth.token;
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+};
+
+// Fetch Pending Offers (Driver Side)
+export const fetchDriverOffers = createAsyncThunk(
+  "trips/fetchDriverOffers",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/trips/driver/offers`,
+        getAuthConfig(getState),
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to fetch offers");
+    }
+  },
+);
+
+// Accept an Offer (Driver Side)
+export const acceptTripOffer = createAsyncThunk(
+  "trips/acceptTripOffer",
+  async (offerId, { getState, rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/trips/driver/accept-offer/${offerId}`,
+        {},
+        getAuthConfig(getState),
+      );
+      return { offerId, ...response.data };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to accept offer");
+    }
+  },
+);
+
+// Reject an Offer (Driver Side)
+export const rejectTripOffer = createAsyncThunk(
+  "trips/rejectTripOffer",
+  async (offerId, { getState, rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/trips/driver/reject-offer/${offerId}`,
+        {},
+        getAuthConfig(getState),
+      );
+      return { offerId };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to reject offer");
+    }
+  },
+);
+
+// Create a user Request
 export const createTrip = createAsyncThunk(
   "trips/createTrip",
   async (tripData, { getState, rejectWithValue }) => {
     try {
-      const token = getState().auth.token;
-      if (!token) {
-        return rejectWithValue("No auth token found");
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
       const response = await axios.post(
-        `${API_BASE_URL}/trips/`,
+        `${API_BASE_URL}/trips/book-request`,
         tripData,
-        config
+        getAuthConfig(getState),
       );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
-// Async thunk to fetch bookings for the current driver
-export const fetchDriverBookings = createAsyncThunk(
-  "trips/fetchDriverBookings",
+// Fetch My Bookings (User: History/Active, Driver: Assigned Trips)
+export const fetchMyBookings = createAsyncThunk(
+  "trips/fetchMyBookings",
   async (_, { getState, rejectWithValue }) => {
     try {
-      const token = getState().auth.token;
-      if (!token) {
-        return rejectWithValue("No auth token found");
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
       const response = await axios.get(
         `${API_BASE_URL}/trips/my-bookings`,
-        config
+        getAuthConfig(getState),
       );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
-// Async thunk to update the status of a trip
+// Cancel Trip (User Side)
+export const cancelTrip = createAsyncThunk(
+  "trips/cancelTrip",
+  async (tripId, { getState, rejectWithValue }) => {
+    try {
+      await axios.post(
+        `${API_BASE_URL}/trips/${tripId}/cancel`,
+        {},
+        getAuthConfig(getState),
+      );
+      return tripId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to cancel trip");
+    }
+  },
+);
+
 export const updateTripStatus = createAsyncThunk(
   "trips/updateTripStatus",
   async ({ tripId, status }, { getState, rejectWithValue }) => {
     try {
-      const token = getState().auth.token;
-      if (!token) {
-        return rejectWithValue("No auth token found");
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
       const response = await axios.patch(
         `${API_BASE_URL}/trips/${tripId}`,
         { status },
-        config
+        getAuthConfig(getState),
       );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 const tripSlice = createSlice({
   name: "trips",
   initialState: {
-    bookings: [],
-    status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
+    bookings: [], // Confirmed/Active trips for User or Driver
+    offers: [], // Pending requests for Driver
+    status: "idle",
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Create Trip
-      .addCase(createTrip.pending, (state) => {
-        state.status = "loading";
+      // Fetch Offers
+      .addCase(fetchDriverOffers.fulfilled, (state, action) => {
+        state.offers = action.payload;
       })
-      .addCase(createTrip.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.bookings.push(action.payload);
-      })
-      .addCase(createTrip.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      })
-      // Fetch Driver Bookings
-      .addCase(fetchDriverBookings.pending, (state) => {
-        state.status = "loading";
-      })
-      .addCase(fetchDriverBookings.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.bookings = action.payload;
-      })
-      .addCase(fetchDriverBookings.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      })
-      // Update Trip Status
-      .addCase(updateTripStatus.pending, (state) => {
-        state.status = "loading";
-      })
-      .addCase(updateTripStatus.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        const index = state.bookings.findIndex(
-          (booking) => booking.id === action.payload.id
+      // Accept Offer
+      .addCase(acceptTripOffer.fulfilled, (state, action) => {
+        state.offers = state.offers.filter(
+          (o) => o.id !== action.payload.offerId,
         );
-        if (index !== -1) {
-          state.bookings[index] = action.payload;
-        }
       })
-      .addCase(updateTripStatus.rejected, (state, action) => {
+      // Reject Offer
+      .addCase(rejectTripOffer.fulfilled, (state, action) => {
+        state.offers = state.offers.filter(
+          (o) => o.id !== action.payload.offerId,
+        );
+      })
+      // Fetch My Bookings
+      .addCase(fetchMyBookings.fulfilled, (state, action) => {
+        state.bookings = action.payload;
+        state.status = "succeeded";
+      })
+      .addCase(fetchMyBookings.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchMyBookings.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
+      })
+      // Create Trip
+      .addCase(createTrip.fulfilled, (state, action) => {
+        // Add the new active trip to the top of the list
+        state.bookings.unshift(action.payload);
+      })
+      // Cancel Trip
+      .addCase(cancelTrip.fulfilled, (state, action) => {
+        // Update the status of the cancelled trip in the local state
+        const index = state.bookings.findIndex((t) => t.id === action.payload);
+        if (index !== -1) {
+          state.bookings[index].status = "cancelled";
+        }
       });
   },
 });

@@ -1,49 +1,55 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Grid,
-  Card,
   CardContent,
   Typography,
   Button,
-  Chip,
-  TextField,
-  InputAdornment,
   Box,
-  Avatar,
-  Skeleton,
-  Pagination,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Stack,
+  TextField,
   Paper,
   useTheme,
   useMediaQuery,
-  IconButton,
+  Tabs,
+  Tab,
+  ToggleButton,
+  ToggleButtonGroup,
+  Alert,
+  Fade,
+  CircularProgress,
+  Stack,
+  Chip,
+  Divider,
+  Stepper,
+  Step,
+  StepLabel,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Avatar,
 } from "@mui/material";
 
 // Icons
-import SearchIcon from "@mui/icons-material/Search";
-import PersonIcon from "@mui/icons-material/Person";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
-import StarIcon from "@mui/icons-material/Star";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import WorkHistoryIcon from "@mui/icons-material/WorkHistory";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import ArrowBackIosNew from "@mui/icons-material/ArrowBackIosNew";
-import ArrowForwardIos from "@mui/icons-material/ArrowForwardIos";
-import GridView from "@mui/icons-material/GridView";
-import ViewCarouselOutlined from "@mui/icons-material/ViewCarouselOutlined";
+import CommuteIcon from "@mui/icons-material/Commute";
+import MapIcon from "@mui/icons-material/Map";
+import CancelIcon from "@mui/icons-material/Cancel";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import HistoryIcon from "@mui/icons-material/History";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 
-// Custom Vehicle Icons
-import VehicleIcon from "../components/VehicleIcons"; // Ensure the path is correct based on where you created the file
+// Components
+import TripPlanner from "../components/TripPlanner";
+import VehicleIcon from "../components/VehicleIcons";
 
 // Redux
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDrivers } from "../features/driverSlice";
 import { showNotification } from "../features/notificationSlice";
+import { createTrip, fetchMyBookings, cancelTrip } from "../features/tripSlice";
 import { useTranslation } from "react-i18next";
 
 export default function BookDriver() {
@@ -51,504 +57,679 @@ export default function BookDriver() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isLandscape = useMediaQuery("(orientation: landscape)");
-  const carouselRef = useRef(null);
 
-  // --- STATE MANAGEMENT ---
-  const { list: drivers, status } = useSelector((state) => state.drivers);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("ALL");
-  const [sortBy, setSortBy] = useState("rating");
-  const [gridPage, setGridPage] = useState(1);
-  const [viewMode, setViewMode] = useState("carousel");
+  // --- REDUX STATE ---
+  const { tripData } = useSelector((state) => state.user);
+  const { bookings, status: bookingStatus } = useSelector(
+    (state) => state.trips,
+  );
 
-  // --- RESPONSIVE & DERIVED VALUES ---
-  const gridItemsPerPage = isMobile ? 12 : 15;
+  // --- LOCAL STATE ---
+  const [activeBooking, setActiveBooking] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  let carouselVisibleItems;
-  if (isMobile) {
-    carouselVisibleItems = isLandscape ? 3 : 2;
-  } else {
-    carouselVisibleItems = 5;
-  }
+  // Form States
+  const [hiringType, setHiringType] = useState(0);
+  const [vehicleType, setVehicleType] = useState("SEDAN");
+  const [shiftType, setShiftType] = useState("fixed");
+  const [fixedHours, setFixedHours] = useState(8);
+  const [flexiHours, setFlexiHours] = useState(4);
+  const [dates, setDates] = useState({ start: "", end: "" });
+  const [reason, setReason] = useState("");
 
-  // --- INITIAL FETCH ---
+  // --- EFFECT: FETCH BOOKINGS & DETERMINE ACTIVE STATE ---
   useEffect(() => {
-    dispatch(fetchDrivers());
-  }, []);
+    dispatch(fetchMyBookings());
+  }, [dispatch]);
 
-  // --- LOGIC: FILTERING & SORTING ---
-  const filteredDrivers = drivers
-    .filter((driver) => {
-      const matchesSearch =
-        driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        driver.phone_number.includes(searchTerm);
-      const matchesType =
-        filterType === "ALL" || driver.vehicle_type === filterType;
-      return matchesSearch && matchesType;
-    })
-    .sort((a, b) => {
-      if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
-      if (sortBy === "experience")
-        return (b.years_of_experience || 0) - (a.years_of_experience || 0);
-      return 0;
-    });
+  useEffect(() => {
+    // Find a trip that is either searching or accepted (not completed/cancelled)
+    // Assuming backend returns sorted by date desc, the first one is likely the latest
+    const active = bookings.find(
+      (trip) => trip.status === "searching" || trip.status === "accepted",
+    );
+    setActiveBooking(active || null);
+  }, [bookings]);
 
-  // --- CAROUSEL SCROLL HANDLERS ---
-  const handleCarouselScroll = (direction) => {
-    if (carouselRef.current) {
-      const scrollAmount = carouselRef.current.clientWidth;
-      carouselRef.current.scrollBy({
-        left: direction === "next" ? scrollAmount : -scrollAmount,
-        behavior: "smooth",
-      });
+  // --- HANDLERS ---
+  const handleHiringTypeChange = (event, newValue) => {
+    setHiringType(newValue);
+  };
+
+  const handleShiftTypeChange = (event, newAlignment) => {
+    if (newAlignment !== null) setShiftType(newAlignment);
+  };
+
+  const handleFixedHoursChange = (event, newAlignment) => {
+    if (newAlignment !== null) setFixedHours(newAlignment);
+  };
+
+  const handleDateChange = (e) => {
+    setDates({ ...dates, [e.target.name]: e.target.value });
+  };
+
+  const handleBookRequest = async () => {
+    setIsProcessing(true);
+
+    const typeMap = { 0: "Short Term", 1: "Monthly", 2: "Outstation" };
+    let payload = {
+      hiring_type: typeMap[hiringType],
+      vehicle_type: vehicleType,
+      reason: reason,
+    };
+
+    // Validation & Construction Logic
+    if (hiringType === 2) {
+      if (!tripData?.startPoint || !tripData?.destination) {
+        dispatch(
+          showNotification({
+            message: "Please select start and destination.",
+            severity: "warning",
+          }),
+        );
+        setIsProcessing(false);
+        return;
+      }
+      if (!tripData?.startDate || !tripData?.endDate) {
+        dispatch(
+          showNotification({
+            message: "Please select dates in Trip Planner.",
+            severity: "warning",
+          }),
+        );
+        setIsProcessing(false);
+        return;
+      }
+      payload.start_location = tripData.startPoint;
+      payload.end_location = tripData.destination;
+      payload.start_date = tripData.startDate;
+      payload.end_date = tripData.endDate;
+      payload.shift_details = "Outstation Trip";
+    } else {
+      if (!dates.start || !dates.end) {
+        dispatch(
+          showNotification({
+            message: "Please select start and end dates.",
+            severity: "warning",
+          }),
+        );
+        setIsProcessing(false);
+        return;
+      }
+      if (!reason.trim()) {
+        dispatch(
+          showNotification({
+            message: "Please provide a reason.",
+            severity: "warning",
+          }),
+        );
+        setIsProcessing(false);
+        return;
+      }
+      payload.start_date = dates.start;
+      payload.end_date = dates.end;
+      payload.start_location = "Local";
+      payload.end_location = "Local";
+      payload.shift_details =
+        shiftType === "fixed"
+          ? `${fixedHours} Hours/Day`
+          : `${flexiHours} Hours/Day (Flexi)`;
+    }
+
+    try {
+      const resultAction = await dispatch(createTrip(payload));
+      if (createTrip.fulfilled.match(resultAction)) {
+        dispatch(
+          showNotification({
+            message: "Booking Request Sent!",
+            severity: "success",
+          }),
+        );
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        dispatch(
+          showNotification({
+            message: resultAction.payload?.detail || "Booking failed.",
+            severity: "error",
+          }),
+        );
+      }
+    } catch (error) {
+      dispatch(
+        showNotification({ message: "Unexpected error.", severity: "error" }),
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  // --- SKELETON LOADER ---
-  const renderSkeletons = () =>
-    Array.from(new Array(gridItemsPerPage)).map((_, index) => (
-      <Grid item key={index} xs={3} sm={4} md={12 / 5}>
-        <Card sx={{ height: "100%", borderRadius: 3, boxShadow: 1 }}>
-          <CardContent sx={{ textAlign: "center", p: 3 }}>
-            <Skeleton
-              variant="circular"
-              width={80}
-              height={80}
-              sx={{ mx: "auto", mb: 2 }}
-            />
-            <Skeleton
-              variant="text"
-              width="60%"
-              height={32}
-              sx={{ mx: "auto", mb: 1 }}
-            />
-            <Skeleton
-              variant="text"
-              width="40%"
-              height={24}
-              sx={{ mx: "auto", mb: 2 }}
-            />
-            <Grid container spacing={1} sx={{ mb: 2 }}>
-              <Grid item xs={6}>
-                <Skeleton
-                  variant="rectangular"
-                  height={30}
-                  sx={{ borderRadius: 1 }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <Skeleton
-                  variant="rectangular"
-                  height={30}
-                  sx={{ borderRadius: 1 }}
-                />
-              </Grid>
+  const handleCancelRequest = async () => {
+    if (!activeBooking) return;
+    if (
+      window.confirm("Are you sure you want to cancel this booking request?")
+    ) {
+      setIsProcessing(true);
+      try {
+        const resultAction = await dispatch(cancelTrip(activeBooking.id));
+        if (cancelTrip.fulfilled.match(resultAction)) {
+          dispatch(
+            showNotification({
+              message: "Booking cancelled.",
+              severity: "info",
+            }),
+          );
+          setActiveBooking(null);
+          setDates({ start: "", end: "" });
+          setReason("");
+        } else {
+          dispatch(
+            showNotification({
+              message: "Failed to cancel.",
+              severity: "error",
+            }),
+          );
+        }
+      } catch (e) {
+        dispatch(
+          showNotification({
+            message: "Error cancelling trip.",
+            severity: "error",
+          }),
+        );
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  // --- SUB-COMPONENTS ---
+  const VehicleSelection = () => (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+        Select Vehicle Type
+      </Typography>
+      <Grid container spacing={1}>
+        {["SEDAN", "SUV", "HATCHBACK", "LUXURY", "TEMPO", "MINIBUS", "BUS"].map(
+          (type) => (
+            <Grid item key={type}>
+              <Paper
+                elevation={vehicleType === type ? 4 : 1}
+                onClick={() => setVehicleType(type)}
+                sx={{
+                  p: 1.5,
+                  cursor: "pointer",
+                  border:
+                    vehicleType === type
+                      ? `2px solid ${theme.palette.primary.main}`
+                      : "2px solid transparent",
+                  borderRadius: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  minWidth: 80,
+                  bgcolor:
+                    vehicleType === type ? "primary.light" : "background.paper",
+                  opacity: vehicleType === type ? 1 : 0.7,
+                }}
+              >
+                <VehicleIcon type={type} height="30px" />
+                <Typography variant="caption" fontWeight="bold" sx={{ mt: 1 }}>
+                  {type}
+                </Typography>
+              </Paper>
             </Grid>
-            <Skeleton
-              variant="rectangular"
-              width="100%"
-              height={40}
-              sx={{ borderRadius: 1 }}
-            />
-          </CardContent>
-        </Card>
+          ),
+        )}
       </Grid>
-    ));
+    </Box>
+  );
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-      {/* --- HEADER SECTION --- */}
-      <Box sx={{ mb: 5, textAlign: "center" }}>
+      {/* --- HEADER --- */}
+      <Box sx={{ mb: 4, textAlign: "center" }}>
         <Typography
           variant="h3"
           fontWeight="800"
           gutterBottom
           color="primary.main"
         >
-          {t("book_driver.title")}
+          {activeBooking
+            ? "Request Status"
+            : t("book_driver.title") || "Book a Driver"}
         </Typography>
-        <Typography
-          variant="h6"
-          color="text.secondary"
-          sx={{ maxWidth: 600, mx: "auto" }}
-        >
-          {t("book_driver.subtitle")}
-        </Typography>
-      </Box>
-
-      {/* --- CONTROLS SECTION (Search, Filter, Sort) --- */}
-      <Paper
-        elevation={2}
-        sx={{ p: 2, mb: 4, borderRadius: 3, bgcolor: "#f8f9fa" }}
-      >
-        <Grid container spacing={2} alignItems="center">
-          {/* Search Bar */}
-          <Grid item xs={12} md={5}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder={t("book_driver.search_placeholder")}
-              size="small"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ bgcolor: "white" }}
-            />
-          </Grid>
-
-          {/* Filter Dropdown */}
-          <Grid item xs={6} md={3}>
-            <FormControl fullWidth size="small" sx={{ bgcolor: "white" }}>
-              <InputLabel>{t("book_driver.vehicle_type_label")}</InputLabel>
-              <Select
-                value={filterType}
-                label={t("book_driver.vehicle_type_label")}
-                onChange={(e) => setFilterType(e.target.value)}
-              >
-                <MenuItem value="ALL">{t("book_driver.all_types")}</MenuItem>
-                <MenuItem value="SEDAN">{t("book_driver.sedan")}</MenuItem>
-                <MenuItem value="SUV">{t("book_driver.suv")}</MenuItem>
-                <MenuItem value="HATCHBACK">
-                  {t("book_driver.hatchback")}
-                </MenuItem>
-                <MenuItem value="LUXURY">{t("book_driver.luxury")}</MenuItem>
-                <MenuItem value="TEMPO">{t("book_driver.tempo")}</MenuItem>
-                <MenuItem value="MINIBUS">{t("book_driver.minibus")}</MenuItem>
-                <MenuItem value="BUS">{t("book_driver.bus")}</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Sort Dropdown */}
-          <Grid item xs={6} md={3}>
-            <FormControl fullWidth size="small" sx={{ bgcolor: "white" }}>
-              <InputLabel>{t("book_driver.sort_by_label")}</InputLabel>
-              <Select
-                value={sortBy}
-                label={t("book_driver.sort_by_label")}
-                onChange={(e) => setSortBy(e.target.value)}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <FilterListIcon fontSize="small" />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="rating">
-                  {t("book_driver.highest_rated")}
-                </MenuItem>
-                <MenuItem value="experience">
-                  {t("book_driver.most_experienced")}
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {/* --- VIEW TOGGLE --- */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        {filteredDrivers.length > 0 && (
-          <>
-            {viewMode === "carousel" ? (
-              <Button
-                startIcon={<GridView />}
-                onClick={() => setViewMode("grid")}
-                variant="outlined"
-              >
-                {t("book_driver.view_all")}
-              </Button>
-            ) : (
-              <Button
-                startIcon={<ViewCarouselOutlined />}
-                onClick={() => setViewMode("carousel")}
-                variant="outlined"
-              >
-                {t("book_driver.view_carousel")}
-              </Button>
-            )}
-          </>
+        {!activeBooking && (
+          <Typography variant="h6" color="text.secondary">
+            Select your hiring plan and get the best drivers in town.
+          </Typography>
         )}
       </Box>
 
-      {/* --- DRIVER LISTING (CAROUSEL / GRID) --- */}
-      <Box>
-        {(() => {
-          // --- RENDER LOGIC ---
-          const gridTotalPages = Math.ceil(
-            filteredDrivers.length / gridItemsPerPage
-          );
-          const gridPaginatedDrivers = filteredDrivers.slice(
-            (gridPage - 1) * gridItemsPerPage,
-            gridPage * gridItemsPerPage
-          );
-
-          // Reusable Driver Card Component
-          const DriverCard = ({ driver }) => (
-            <Card
-              component={Link}
-              to="/driver-detail"
-              state={{ driver: driver }}
+      {/* --- CONDITIONAL RENDERING: STATUS vs FORM --- */}
+      {activeBooking ? (
+        <Fade in={true}>
+          <Paper
+            elevation={3}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              maxWidth: 800,
+              mx: "auto",
+              textAlign: "center",
+              mb: 6,
+            }}
+          >
+            <Box
               sx={{
-                height: "100%",
                 display: "flex",
                 flexDirection: "column",
-                transition: "0.3s",
-                borderRadius: 3,
-                textDecoration: "none",
-                color: "inherit",
-                "&:hover": { transform: "translateY(-5px)", boxShadow: 6 },
+                alignItems: "center",
+                mb: 4,
               }}
             >
-              <CardContent
-                sx={{
-                  flexGrow: 1,
-                  textAlign: "center",
-                  position: "relative",
-                  p: { xs: 2, md: 3 },
-                }}
+              {activeBooking.status === "accepted" ? (
+                <CheckCircleIcon color="success" sx={{ fontSize: 80, mb: 2 }} />
+              ) : (
+                <PendingActionsIcon
+                  color="primary"
+                  sx={{ fontSize: 80, mb: 2 }}
+                />
+              )}
+
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
+                {activeBooking.status === "accepted"
+                  ? "Driver Assigned!"
+                  : "Request Submitted"}
+              </Typography>
+
+              <Chip
+                label={`ID: ${activeBooking.id}`}
+                color="default"
+                sx={{ mb: 2, fontWeight: "bold" }}
+              />
+
+              <Typography color="text.secondary" sx={{ maxWidth: 500, mb: 2 }}>
+                We have received your request for a{" "}
+                <strong>{activeBooking.vehicle_type}</strong> driver for{" "}
+                <strong>{activeBooking.hiring_type}</strong>.
+              </Typography>
+
+              {activeBooking.driver && (
+                <Alert
+                  severity="success"
+                  sx={{ mb: 3, width: "100%", maxWidth: 500 }}
+                >
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    Driver Details:
+                  </Typography>
+                  <Typography variant="body2">
+                    {activeBooking.driver.name} (Rating:{" "}
+                    {activeBooking.driver.rating}★)
+                  </Typography>
+                </Alert>
+              )}
+            </Box>
+
+            <Stepper
+              activeStep={activeBooking.status === "accepted" ? 2 : 1}
+              alternativeLabel
+              sx={{ mb: 5 }}
+            >
+              <Step key="Request Sent" completed>
+                <StepLabel>Request Sent</StepLabel>
+              </Step>
+              <Step
+                key="Processing"
+                completed={activeBooking.status === "accepted"}
               >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 16,
-                    right: 16,
-                    display: "flex",
-                    alignItems: "center",
-                    bgcolor: "#fffbf0",
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    border: "1px solid #ffcd38",
-                  }}
-                >
-                  <StarIcon sx={{ color: "#ffb400", fontSize: 18, mr: 0.5 }} />
-                  <Typography variant="body2" fontWeight="bold">
-                    {driver.rating || "0.0"}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    width: { xs: 70, md: 90 },
-                    height: { xs: 70, md: 90 },
-                    margin: "0 auto",
-                    mb: 2,
-                    bgcolor: "#e3f2fd",
-                    color: "#1976d2",
-                  }}
-                  src={driver.avatar_url}
-                >
-                  {!driver.avatar_url && (
-                    <PersonIcon sx={{ fontSize: { xs: 40, md: 50 } }} />
-                  )}
-                </Avatar>
-                <Typography variant="h6" fontWeight="bold">
-                  {driver?.name}
+                <StepLabel>Allocating Driver</StepLabel>
+              </Step>
+              <Step
+                key="Driver Assigned"
+                completed={activeBooking.status === "accepted"}
+              >
+                <StepLabel>Driver Assigned</StepLabel>
+              </Step>
+            </Stepper>
+
+            <Divider sx={{ mb: 3 }} />
+
+            <Grid
+              container
+              spacing={2}
+              justifyContent="center"
+              sx={{ mb: 4, textAlign: "left" }}
+            >
+              <Grid item xs={12} md={5}>
+                <Typography variant="body2" color="text.secondary">
+                  Dates
                 </Typography>
-
-                {/* --- VEHICLE ICON REPLACEMENT START --- */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: isMobile ? "20px" : "32px",
-                    mt: 1,
-                    mb: 2,
-                  }}
-                >
-                  {/* This replaces the text-based vehicle type display */}
-                  <VehicleIcon
-                    type={driver.vehicle_type}
-                    height={isMobile ? "20px" : "32px"}
-                  />
-                </Box>
-                {/* --- VEHICLE ICON REPLACEMENT END --- */}
-
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  justifyContent="center"
-                  sx={{ my: 1 }}
-                >
-                  <Chip
-                    icon={<VerifiedUserIcon />}
-                    label={t("book_driver.verified")}
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                  />
-                  <Chip
-                    icon={<WorkHistoryIcon />}
-                    label={`${driver.years_of_experience || 3}+ ${t(
-                      "book_driver.years_abbr"
-                    )}`}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                </Stack>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    mt: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      mr: 1,
-                      bgcolor:
-                        driver.status === "busy"
-                          ? "error.main"
-                          : "success.main",
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    color={
-                      driver.status === "busy" ? "error.main" : "success.main"
-                    }
-                    fontWeight="bold"
-                  >
-                    {driver.status === "busy"
-                      ? t("book_driver.status_on_trip")
-                      : t("book_driver.status_available")}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          );
-
-          if (status === "loading") {
-            return (
-              <Grid container spacing={3}>
-                {renderSkeletons()}
+                <Typography variant="body1" fontWeight="bold">
+                  {activeBooking.start_date} to {activeBooking.end_date}
+                </Typography>
               </Grid>
-            );
-          }
-
-          if (status === "succeeded" && filteredDrivers.length === 0) {
-            return (
-              <Box sx={{ textAlign: "center", py: 8 }}>
-                <Typography variant="h6" color="text.secondary">
-                  {t("book_driver.no_drivers_found")}
+              <Grid item xs={12} md={5}>
+                <Typography variant="body2" color="text.secondary">
+                  Shift
                 </Typography>
-                <Button
-                  sx={{ mt: 2 }}
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilterType("ALL");
-                  }}
-                >
-                  {t("book_driver.clear_filters_button")}
-                </Button>
-              </Box>
-            );
-          }
+                <Typography variant="body1" fontWeight="bold">
+                  {activeBooking.shift_details || "Standard"}
+                </Typography>
+              </Grid>
+            </Grid>
 
-          if (viewMode === "carousel") {
-            const cardGap = theme.spacing(2); // 16px
-            const cardWidth = `calc(100% / ${carouselVisibleItems} - (${cardGap} * (${carouselVisibleItems} - 1)) / ${carouselVisibleItems})`;
+            <Alert severity="info" sx={{ mb: 4, textAlign: "left" }}>
+              {activeBooking.status === "accepted"
+                ? "Your driver will contact you shortly."
+                : "You will be notified once a driver accepts your request."}
+            </Alert>
 
-            return (
-              <Box sx={{ position: "relative" }}>
-                <IconButton
-                  onClick={() => handleCarouselScroll("prev")}
-                  sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: -25,
-                    transform: "translateY(-50%)",
-                    zIndex: 2,
-                    bgcolor: "background.paper",
-                    boxShadow: 3,
-                    "&:hover": { bgcolor: "grey.200" },
-                  }}
-                >
-                  <ArrowBackIosNew />
-                </IconButton>
-                <Box
-                  ref={carouselRef}
-                  sx={{
-                    display: "flex",
-                    overflowX: "auto",
-                    scrollSnapType: "x mandatory",
-                    gap: cardGap,
-                    py: 1, // Add padding for shadow visibility
-                    "&::-webkit-scrollbar": { display: "none" },
-                    scrollbarWidth: "none", // For Firefox
-                  }}
-                >
-                  {filteredDrivers.map((driver) => (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={
+                isProcessing ? <CircularProgress size={20} /> : <CancelIcon />
+              }
+              onClick={handleCancelRequest}
+              disabled={isProcessing}
+            >
+              Cancel Request
+            </Button>
+          </Paper>
+        </Fade>
+      ) : (
+        /* --- BOOKING FORM --- */
+        <Paper
+          elevation={3}
+          sx={{ borderRadius: 3, overflow: "hidden", mb: 6 }}
+        >
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Tabs
+              value={hiringType}
+              onChange={handleHiringTypeChange}
+              variant={isMobile ? "fullWidth" : "standard"}
+              centered={!isMobile}
+              textColor="primary"
+              indicatorColor="primary"
+            >
+              <Tab
+                icon={<CalendarMonthIcon />}
+                label="Monthly"
+                iconPosition="start"
+              />
+              <Tab
+                icon={<AccessTimeIcon />}
+                label="Short Term"
+                iconPosition="start"
+              />
+              <Tab icon={<MapIcon />} label="Outstation" iconPosition="start" />
+            </Tabs>
+          </Box>
+
+          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+            <Fade in={true} key={hiringType}>
+              <Box>
+                {hiringType === 2 && (
+                  <Box>
+                    <Alert severity="info" sx={{ mb: 3 }}>
+                      <strong>Note:</strong> For outstation trips, a driver
+                      allowance will be added to the final fare.
+                    </Alert>
+                    <TripPlanner />
                     <Box
-                      key={driver.id}
                       sx={{
-                        minWidth: cardWidth,
-                        flex: `0 0 ${cardWidth}`,
-                        scrollSnapAlign: "start",
+                        mt: 3,
+                        display: "flex",
+                        justifyContent: "flex-end",
                       }}
                     >
-                      <DriverCard driver={driver} />
+                      <Button
+                        variant="contained"
+                        size="large"
+                        onClick={handleBookRequest}
+                        disabled={isProcessing}
+                        startIcon={
+                          isProcessing ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : (
+                            <CommuteIcon />
+                          )
+                        }
+                      >
+                        {isProcessing
+                          ? "Processing..."
+                          : "Request Outstation Driver"}
+                      </Button>
                     </Box>
-                  ))}
-                </Box>
-                <IconButton
-                  onClick={() => handleCarouselScroll("next")}
-                  sx={{
-                    position: "absolute",
-                    top: "50%",
-                    right: -25,
-                    transform: "translateY(-50%)",
-                    zIndex: 2,
-                    bgcolor: "background.paper",
-                    boxShadow: 3,
-                    "&:hover": { bgcolor: "grey.200" },
-                  }}
-                >
-                  <ArrowForwardIos />
-                </IconButton>
-              </Box>
-            );
-          }
-
-          if (viewMode === "grid") {
-            return (
-              <Box>
-                <Grid container spacing={3}>
-                  {gridPaginatedDrivers.map((driver) => (
-                    <Grid item key={driver.id} xs={3} sm={4} md={12 / 5}>
-                      <DriverCard driver={driver} />
-                    </Grid>
-                  ))}
-                </Grid>
-                {gridTotalPages > 1 && (
-                  <Box
-                    sx={{ display: "flex", justifyContent: "center", mt: 6 }}
-                  >
-                    <Pagination
-                      count={gridTotalPages}
-                      page={gridPage}
-                      onChange={(e, value) => setGridPage(value)}
-                      color="primary"
-                      size="large"
-                    />
                   </Box>
                 )}
+
+                {(hiringType === 0 || hiringType === 1) && (
+                  <Grid container spacing={4}>
+                    <Grid item xs={12} md={6}>
+                      <VehicleSelection />
+                      <Box sx={{ mb: 3 }}>
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight="bold"
+                          gutterBottom
+                        >
+                          Shift Duration
+                        </Typography>
+                        <ToggleButtonGroup
+                          value={shiftType}
+                          exclusive
+                          onChange={handleShiftTypeChange}
+                          fullWidth
+                          sx={{ mb: 2 }}
+                        >
+                          <ToggleButton value="flexi">
+                            <AccessTimeIcon sx={{ mr: 1 }} /> Flexi / Hourly
+                          </ToggleButton>
+                          <ToggleButton value="fixed">
+                            <WorkHistoryIcon sx={{ mr: 1 }} /> Full Shift
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                        <Paper
+                          variant="outlined"
+                          sx={{ p: 2, bgcolor: "background.default" }}
+                        >
+                          {shiftType === "fixed" ? (
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                gutterBottom
+                              >
+                                Select standard shift duration:
+                              </Typography>
+                              <ToggleButtonGroup
+                                value={fixedHours}
+                                exclusive
+                                onChange={handleFixedHoursChange}
+                                color="primary"
+                                fullWidth
+                                size="small"
+                              >
+                                <ToggleButton value={8}>8 Hrs</ToggleButton>
+                                <ToggleButton value={9}>9 Hrs</ToggleButton>
+                                <ToggleButton value={10}>10 Hrs</ToggleButton>
+                              </ToggleButtonGroup>
+                            </Box>
+                          ) : (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 2,
+                              }}
+                            >
+                              <Typography variant="body2">
+                                Hours/Day:
+                              </Typography>
+                              <TextField
+                                type="number"
+                                size="small"
+                                value={flexiHours}
+                                onChange={(e) => setFlexiHours(e.target.value)}
+                                inputProps={{ min: 1, max: 24 }}
+                                sx={{ width: 100 }}
+                              />
+                            </Box>
+                          )}
+                        </Paper>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight="bold"
+                          gutterBottom
+                        >
+                          Select Dates
+                        </Typography>
+                        <Stack
+                          direction={isMobile ? "column" : "row"}
+                          spacing={2}
+                        >
+                          <TextField
+                            fullWidth
+                            type="date"
+                            label="Start Date"
+                            name="start"
+                            InputLabelProps={{ shrink: true }}
+                            value={dates.start}
+                            onChange={handleDateChange}
+                          />
+                          <TextField
+                            fullWidth
+                            type="date"
+                            label="End Date"
+                            name="end"
+                            InputLabelProps={{ shrink: true }}
+                            value={dates.end}
+                            onChange={handleDateChange}
+                          />
+                        </Stack>
+                        {hiringType === 1 && (
+                          <Chip
+                            label="Monthly hiring: Min 30 days"
+                            color="info"
+                            size="small"
+                            sx={{ mt: 1 }}
+                          />
+                        )}
+                      </Box>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight="bold"
+                          gutterBottom
+                        >
+                          Main Reason
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          multiline
+                          rows={3}
+                          placeholder="E.g., Office commute..."
+                          value={reason}
+                          onChange={(e) => setReason(e.target.value)}
+                        />
+                      </Box>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        size="large"
+                        onClick={handleBookRequest}
+                        disabled={isProcessing}
+                        startIcon={
+                          isProcessing ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : (
+                            <CommuteIcon />
+                          )
+                        }
+                        sx={{ height: 50, fontSize: "1.1rem" }}
+                      >
+                        {isProcessing ? "Processing..." : "Book Request"}
+                      </Button>
+                    </Grid>
+                  </Grid>
+                )}
               </Box>
-            );
-          }
-        })()}
+            </Fade>
+          </CardContent>
+        </Paper>
+      )}
+
+      {/* --- PAST BOOKINGS SECTION --- */}
+      <Box sx={{ mt: 6 }}>
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ display: "flex", alignItems: "center" }}
+        >
+          <HistoryIcon sx={{ mr: 1 }} /> Your Booking History
+        </Typography>
+        <Paper elevation={1} sx={{ borderRadius: 2 }}>
+          <List>
+            {bookings && bookings.length > 0 ? (
+              bookings.map((trip) => (
+                <React.Fragment key={trip.id}>
+                  <ListItem>
+                    <ListItemIcon>
+                      <Avatar
+                        sx={{
+                          bgcolor:
+                            trip.status === "cancelled"
+                              ? "error.light"
+                              : trip.status === "completed"
+                                ? "success.light"
+                                : "primary.light",
+                        }}
+                      >
+                        <DirectionsCarIcon color="inherit" />
+                      </Avatar>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={`${trip.hiring_type} - ${trip.vehicle_type} (${trip.status.toUpperCase()})`}
+                      secondary={`${trip.start_date} to ${trip.end_date} • ${trip.shift_details || "Standard"}`}
+                    />
+                    <Chip
+                      label={trip.status}
+                      color={
+                        trip.status === "cancelled"
+                          ? "error"
+                          : trip.status === "completed"
+                            ? "success"
+                            : "primary"
+                      }
+                      size="small"
+                    />
+                  </ListItem>
+                  <Divider variant="inset" component="li" />
+                </React.Fragment>
+              ))
+            ) : (
+              <ListItem>
+                <ListItemText
+                  primary="No booking history found."
+                  secondary="Your past and current bookings will appear here."
+                />
+              </ListItem>
+            )}
+          </List>
+        </Paper>
       </Box>
     </Container>
   );

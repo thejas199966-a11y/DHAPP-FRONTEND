@@ -95,7 +95,7 @@ const Dashboard = () => {
       </Card>
 
       {/* Trip Planner Component */}
-      <TripPlanner />
+      {/* <TripPlanner /> */}
 
       {/* 2. Action Buttons Section */}
       <Container maxWidth="lg">

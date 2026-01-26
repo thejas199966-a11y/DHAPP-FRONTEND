@@ -13,14 +13,21 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  Badge,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import PersonIcon from "@mui/icons-material/Person";
 import BookOnlineIcon from "@mui/icons-material/BookOnline";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
 import { fetchDriverProfile } from "../features/driverSlice";
-import { fetchDriverBookings, updateTripStatus } from "../features/tripSlice";
+import {
+  fetchMyBookings,
+  fetchDriverOffers,
+  acceptTripOffer,
+  rejectTripOffer,
+} from "../features/tripSlice";
 import { showNotification } from "../features/notificationSlice";
 
 import BookingRequests from "../components/BookingRequests";
@@ -42,13 +49,28 @@ const DriverDashboard = () => {
   const [isCollapsed, setIsCollapsed] = useState(true); // Collapse by default on mobile
 
   const { profile, profileStatus } = useSelector((state) => state.drivers);
-  const { bookings, status: bookingsStatus } = useSelector(
-    (state) => state.trips
-  );
+  // Get both confirmed bookings and pending offers
+  const {
+    bookings,
+    offers,
+    status: tripsStatus,
+  } = useSelector((state) => state.trips);
 
+  // --- REAL-TIME POLLING ---
   useEffect(() => {
+    // Initial Fetch
     dispatch(fetchDriverProfile());
-    dispatch(fetchDriverBookings());
+    dispatch(fetchMyBookings());
+    dispatch(fetchDriverOffers());
+
+    // Poll for new offers every 30 seconds
+    const intervalId = setInterval(() => {
+      dispatch(fetchDriverOffers());
+      // Optionally refresh bookings too
+      dispatch(fetchMyBookings());
+    }, 30000);
+
+    return () => clearInterval(intervalId);
   }, [dispatch]);
 
   const handleDrawerToggle = () => {
@@ -57,35 +79,56 @@ const DriverDashboard = () => {
 
   const handleMenuItemClick = (view) => {
     setActiveView(view);
-    if (isMobile) {
-      setIsCollapsed(true);
-    }
+    if (isMobile) setIsCollapsed(true);
   };
 
-  const handleUpdateStatus = (tripId, status) => {
-    dispatch(updateTripStatus({ tripId, status }))
+  // --- HANDLERS FOR OFFERS ---
+  const handleAcceptOffer = (offerId) => {
+    dispatch(acceptTripOffer(offerId))
       .unwrap()
       .then(() => {
         dispatch(
-          showNotification({
-            message: `Booking ${status}`,
-            severity: "success",
-          })
+          showNotification({ message: "Trip Accepted!", severity: "success" }),
         );
+        dispatch(fetchMyBookings()); // Refresh my trips
       })
       .catch((err) => {
         dispatch(
           showNotification({
-            message: err.message || "Failed to update status.",
+            message: err.message || "Failed to accept.",
             severity: "error",
-          })
+          }),
+        );
+      });
+  };
+
+  const handleRejectOffer = (offerId) => {
+    dispatch(rejectTripOffer(offerId))
+      .unwrap()
+      .then(() => {
+        dispatch(
+          showNotification({ message: "Trip Rejected.", severity: "info" }),
+        );
+      })
+      .catch((err) => {
+        dispatch(
+          showNotification({ message: "Failed to reject.", severity: "error" }),
         );
       });
   };
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, view: "home" },
-    { text: "Booking Requests", icon: <BookOnlineIcon />, view: "bookings" },
+    {
+      text: "New Requests",
+      icon: (
+        <Badge badgeContent={offers?.length || 0} color="error">
+          <NotificationsActiveIcon />
+        </Badge>
+      ),
+      view: "requests",
+    },
+    { text: "My Trips", icon: <DirectionsCarIcon />, view: "mytrips" },
   ];
 
   const currentDrawerWidth = isMobile
@@ -93,8 +136,8 @@ const DriverDashboard = () => {
       ? mobileCollapsedDrawerWidth
       : mobileDrawerWidth
     : isCollapsed
-    ? collapsedDrawerWidth
-    : drawerWidth;
+      ? collapsedDrawerWidth
+      : drawerWidth;
 
   const drawerContent = (
     <List>
@@ -144,27 +187,32 @@ const DriverDashboard = () => {
   );
 
   const renderContent = () => {
-    if (profileStatus === "loading" || bookingsStatus === "loading") {
-      return <CircularProgress />;
-    }
-    if (profileStatus === "failed" && bookingsStatus === "failed") {
-      return (
-        <Alert severity="error">
-          Error loading dashboard data. Please try again later.
-        </Alert>
-      );
-    }
+    if (profileStatus === "loading")
+      return <CircularProgress sx={{ display: "block", mx: "auto", mt: 5 }} />;
 
     switch (activeView) {
       case "home":
-        return <DashboardHome />;
-      case "bookings":
-        const pendingBookings = bookings.filter((b) => b.status === "pending");
+        return <DashboardHome profile={profile} bookings={bookings} />;
+      case "requests":
         return (
           <BookingRequests
-            bookings={pendingBookings}
-            onUpdateStatus={handleUpdateStatus}
+            offers={offers} // Pass offers here
+            onAccept={handleAcceptOffer}
+            onReject={handleRejectOffer}
+            isHistory={false}
           />
+        );
+      case "mytrips":
+        // We can reuse BookingRequests or create a TripHistory component
+        // For now, reusing BookingRequests in "read-only" mode or adapting it
+        return (
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Upcoming & Past Trips
+            </Typography>
+            {/* If you want to reuse the component for Bookings, you'd map bookings to a similar structure or create a new component */}
+            <Alert severity="info">Trip History view coming soon...</Alert>
+          </Box>
         );
       default:
         return <DashboardHome />;
