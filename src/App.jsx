@@ -20,9 +20,10 @@ import UserDashboard from "./pages/Dashboard";
 import BookDriver from "./pages/BookDriver";
 import BookTravel from "./pages/BookTravel";
 import DriverDashboard from "./pages/DriverDashboard";
-import OrgDashboard from "./pages/OrgDashboard";
 import NotFound from "./pages/NotFound";
 import DriverDetailPage from "./pages/DriverDetailPage";
+import TowDriverDashboard from "./pages/TowDriverDashboard";
+import BookTowDriver from "./pages/BookTowDriver";
 
 function App() {
   const { mode } = useSelector((state) => state.theme);
@@ -32,8 +33,7 @@ function App() {
   const HomeRoute = () => {
     if (token) {
       if (user?.role === "driver") return <Navigate to="/driver-dashboard" />;
-      if (user?.role === "organisation")
-        return <Navigate to="/org-dashboard" />;
+      if (user?.role === "tow_truck_driver") return <Navigate to="/tow-driver-dashboard" />;
     }
     return <UserDashboard />;
   };
@@ -52,6 +52,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <BookDriver />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/book-tow-driver"
+              element={
+                <ProtectedRoute>
+                  <BookTowDriver />
                 </ProtectedRoute>
               }
             />
@@ -80,10 +88,10 @@ function App() {
               }
             />
             <Route
-              path="/org-dashboard"
+              path="/tow-driver-dashboard"
               element={
-                <ProtectedRoute allowedRoles={["organisation"]}>
-                  <OrgDashboard />
+                <ProtectedRoute allowedRoles={["tow_truck_driver"]}>
+                  <TowDriverDashboard />
                 </ProtectedRoute>
               }
             />

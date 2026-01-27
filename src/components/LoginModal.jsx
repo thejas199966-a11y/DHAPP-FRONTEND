@@ -49,22 +49,23 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import { useTranslation } from "react-i18next";
 
 const LoginModal = () => {
   const { t } = useTranslation();
   const [isSignup, setIsSignup] = useState(false);
-  const [role, setRole] = useState("user"); // 'user' | 'driver' | 'organisation'
+  const [role, setRole] = useState("user"); // 'user' | 'driver' | 'towTruckDriver'
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef(null);
   const initialLaunch = useRef(true);
 
   const { isLoginModalOpen, initialView } = useSelector(
-    (state) => state.authModal
+    (state) => state.authModal,
   );
   const { emailVerificationStatus, emailVerificationError } = useSelector(
-    (state) => state.auth
+    (state) => state.auth,
   );
 
   const dispatch = useDispatch();
@@ -95,9 +96,6 @@ const LoginModal = () => {
     license_number: "", // For Driver
     vehicle_type: "", // For Driver
     phone_number: "", // For Driver
-    org_name: "", // For Organisation
-    contact_number: "", // For Organisation
-    address: "", // For Organisation
   });
 
   const navigate = useNavigate();
@@ -131,9 +129,9 @@ const LoginModal = () => {
       videoSrc: videoSources,
     },
     {
-      id: "organisation",
-      label: t("login.org_role"),
-      icon: BusinessIcon,
+      id: "tow_truck_driver",
+      label: "Tow Driver",
+      icon: LocalShippingIcon,
       videoSrc: videoSources,
     },
   ];
@@ -170,7 +168,7 @@ const LoginModal = () => {
 
   const passwordStrength = useMemo(
     () => getPasswordStrength(formData.password),
-    [formData.password]
+    [formData.password],
   );
 
   const handleClose = () => {
@@ -188,7 +186,7 @@ const LoginModal = () => {
         showNotification({
           message: "Please enter a valid email address.",
           severity: "error",
-        })
+        }),
       );
       return;
     }
@@ -201,15 +199,16 @@ const LoginModal = () => {
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}${endpoint}`,
-        payload
+        payload,
       );
 
       dispatch(
-        loginSuccess({ token: res.data.access_token, user: res.data.user })
+        loginSuccess({ token: res.data.access_token, user: res.data.user }),
       );
       handleClose();
       if (res.data.user.role === "driver") navigate("/driver-dashboard");
-      if (res.data.user.role === "organisation") navigate("/org-dashboard");
+      if (res.data.user.role === "tow_truck_driver")
+        navigate("/tow-driver-dashboard");
     } catch (err) {
       dispatch(
         showNotification({
@@ -217,7 +216,7 @@ const LoginModal = () => {
             t("login.error_prefix") +
             (err.response?.data?.detail || t("login.login_failed")),
           severity: "error",
-        })
+        }),
       );
     } finally {
       setLoading(false);
@@ -230,10 +229,10 @@ const LoginModal = () => {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/auth/google?token=${
           credentialResponse.credential
-        }`
+        }`,
       );
       dispatch(
-        loginSuccess({ token: res.data.access_token, user: res.data.user })
+        loginSuccess({ token: res.data.access_token, user: res.data.user }),
       );
       handleClose();
     } catch (err) {
@@ -424,16 +423,16 @@ const LoginModal = () => {
                 >
                   {role === "driver"
                     ? t("login.driver_subtitle")
-                    : role === "organisation"
-                    ? t("login.org_subtitle")
                     : t("login.user_subtitle")}
                 </Typography>
 
                 <form onSubmit={handleSubmit}>
                   {isSignup && (
                     <>
-                      {/* Fields for User/Driver Full Name */}
-                      {role !== "organisation" && (
+                      {/* Fields for User/Driver/Tow Full Name */}
+                      {(role === "user" ||
+                        role === "driver" ||
+                        role === "tow_truck_driver") && (
                         <TextField
                           fullWidth
                           label={t("login.full_name_label")}
@@ -448,42 +447,30 @@ const LoginModal = () => {
                         />
                       )}
 
-                      {/* Fields Specific to Organisation */}
-                      {role === "organisation" && (
+                      {/* Fields Specific to Tow Truck Driver */}
+                      {role === "tow_truck_driver" && (
                         <>
                           <TextField
                             fullWidth
-                            label={t("login.org_name_label")}
+                            label="Phone Number"
                             margin="normal"
                             disabled={loading}
                             onChange={(e) =>
                               setFormData({
                                 ...formData,
-                                org_name: e.target.value,
+                                phone_number: e.target.value,
                               })
                             }
                           />
                           <TextField
                             fullWidth
-                            label={t("login.contact_number_label")}
+                            label="Vehicle Number"
                             margin="normal"
                             disabled={loading}
                             onChange={(e) =>
                               setFormData({
                                 ...formData,
-                                contact_number: e.target.value,
-                              })
-                            }
-                          />
-                          <TextField
-                            fullWidth
-                            label={t("login.address_label")}
-                            margin="normal"
-                            disabled={loading}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                address: e.target.value,
+                                vehicle_number: e.target.value,
                               })
                             }
                           />
@@ -546,8 +533,12 @@ const LoginModal = () => {
                               <MenuItem value="LUXURY">
                                 {t("login.luxury")}
                               </MenuItem>
-                              <MenuItem value="TEMPO">{t("login.tempo")}</MenuItem>
-                              <MenuItem value="MINIBUS">{t("login.minibus")}</MenuItem>
+                              <MenuItem value="TEMPO">
+                                {t("login.tempo")}
+                              </MenuItem>
+                              <MenuItem value="MINIBUS">
+                                {t("login.minibus")}
+                              </MenuItem>
                               <MenuItem value="BUS">{t("login.bus")}</MenuItem>
                             </Select>
                           </FormControl>
@@ -558,11 +549,7 @@ const LoginModal = () => {
 
                   <TextField
                     fullWidth
-                    label={
-                      role === "organisation"
-                        ? t("login.business_email_label")
-                        : t("login.email_label")
-                    }
+                    label={t("login.email_label")}
                     margin="normal"
                     disabled={loading}
                     onChange={handleEmailChange}

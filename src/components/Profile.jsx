@@ -25,6 +25,11 @@ import {
   updateUserProfile,
   uploadUserProfilePicture,
 } from "../features/userSlice";
+import {
+  fetchTowDriverProfile,
+  updateTowDriverProfile,
+  uploadTowDriverProfilePicture,
+} from "../features/towTruckDriverSlice";
 import { showNotification } from "../features/notificationSlice";
 import ImageCropper from "./ImageCropper";
 
@@ -38,11 +43,19 @@ const Profile = ({ onClose }) => {
   // Selectors based on role
   const driverState = useSelector((state) => state.drivers);
   const userState = useSelector((state) => state.user);
+  const towDriverState = useSelector((state) => state.towTruckDrivers);
 
-  const profileData =
-    role === "driver" ? driverState.profile : userState.profile;
-  const status =
-    role === "driver" ? driverState.profileStatus : userState.profileStatus;
+  let profileData, status;
+  if (role === "driver") {
+    profileData = driverState.profile;
+    status = driverState.profileStatus;
+  } else if (role === "tow_truck_driver") {
+    profileData = towDriverState.profile;
+    status = towDriverState.profileStatus;
+  } else {
+    profileData = userState.profile;
+    status = userState.profileStatus;
+  }
 
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
@@ -55,6 +68,8 @@ const Profile = ({ onClose }) => {
   useEffect(() => {
     if (role === "driver") {
       dispatch(fetchDriverProfile());
+    } else if (role === "tow_truck_driver") {
+      dispatch(fetchTowDriverProfile());
     } else {
       dispatch(fetchUserProfile());
     }
@@ -91,6 +106,8 @@ const Profile = ({ onClose }) => {
     try {
       if (role === "driver") {
         await dispatch(uploadDriverProfilePicture(croppedImageUrl)).unwrap();
+      } else if (role === "tow_truck_driver") {
+        await dispatch(uploadTowDriverProfilePicture(croppedImageUrl)).unwrap();
       } else {
         await dispatch(uploadUserProfilePicture(croppedImageUrl)).unwrap();
       }
@@ -98,14 +115,14 @@ const Profile = ({ onClose }) => {
         showNotification({
           message: "Profile picture updated successfully!",
           severity: "success",
-        })
+        }),
       );
     } catch (error) {
       dispatch(
         showNotification({
           message: "Failed to upload profile picture.",
           severity: "error",
-        })
+        }),
       );
     }
   };
@@ -114,6 +131,8 @@ const Profile = ({ onClose }) => {
     try {
       if (role === "driver") {
         await dispatch(updateDriverProfile(formData)).unwrap();
+      } else if (role === "tow_truck_driver") {
+        await dispatch(updateTowDriverProfile(formData)).unwrap();
       } else {
         await dispatch(updateUserProfile(formData)).unwrap();
       }
@@ -121,7 +140,7 @@ const Profile = ({ onClose }) => {
         showNotification({
           message: "Profile updated successfully!",
           severity: "success",
-        })
+        }),
       );
       setIsEdited(false);
       onClose();
@@ -130,7 +149,7 @@ const Profile = ({ onClose }) => {
         showNotification({
           message: "Failed to update profile",
           severity: "error",
-        })
+        }),
       );
     }
   };
@@ -331,7 +350,9 @@ const Profile = ({ onClose }) => {
             label={role === "driver" ? "Name" : "Full Name"}
             name={role === "driver" ? "name" : "full_name"}
             value={
-              role === "driver" ? formData?.name || "" : formData?.full_name || ""
+              role === "driver" || role === "tow_truck_driver"
+                ? formData?.name || ""
+                : formData?.full_name || ""
             }
             onChange={handleChange}
             variant="filled"
@@ -505,6 +526,65 @@ const Profile = ({ onClose }) => {
                 InputProps={{ style: { color: "#777" } }}
                 InputLabelProps={{ style: { color: "#ccc" } }}
                 helperText="License number cannot be changed"
+                sx={{
+                  "& .MuiFilledInput-root::after": {
+                    borderBottomColor: "white",
+                  },
+                }}
+              />
+            </Grid>
+          </>
+        )}
+
+        {/* --- Tow Driver Specific Fields --- */}
+        {role === "tow_truck_driver" && (
+          <>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Phone Number"
+                name="phone_number"
+                value={formData.phone_number || ""}
+                onChange={handleChange}
+                variant="filled"
+                InputProps={{ style: { color: "white" } }}
+                InputLabelProps={{ style: { color: "#ccc" } }}
+                sx={{
+                  "& .MuiFilledInput-root::after": {
+                    borderBottomColor: "white",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Vehicle Number"
+                name="vehicle_number"
+                value={formData.vehicle_number || ""}
+                onChange={handleChange}
+                variant="filled"
+                InputProps={{ style: { color: "white" } }}
+                InputLabelProps={{ style: { color: "#ccc" } }}
+                sx={{
+                  "& .MuiFilledInput-root::after": {
+                    borderBottomColor: "white",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                name="address"
+                value={formData.address || ""}
+                onChange={handleChange}
+                variant="filled"
+                multiline
+                rows={2}
+                InputProps={{ style: { color: "white" } }}
+                InputLabelProps={{ style: { color: "#ccc" } }}
                 sx={{
                   "& .MuiFilledInput-root::after": {
                     borderBottomColor: "white",

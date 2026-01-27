@@ -240,50 +240,10 @@ const MountainIcon = ({ isNight }) => {
 const AnimatedTravelButton = ({ t, isMobile }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { mode } = useSelector((state) => state.theme);
-  const { tripData } = useSelector((state) => state.user);
   const { token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isNight = mode === "dark";
-
-  const validateTripData = () => {
-    if (Object.keys(tripData || {}).length === 0) {
-      dispatch(
-        showNotification({
-          message: "Please fill in the required fields.",
-          severity: "warning",
-        })
-      );
-      return;
-    }
-    const invalidForm = Object.entries(tripData || {}).some(([key, value]) => {
-      if (!value) {
-        dispatch(
-          showNotification({
-            message: `Please fill in the ${key} field.`,
-            severity: "warning",
-          })
-        );
-        return true;
-      }
-      return false;
-    });
-
-    if (invalidForm) return;
-
-    if (!tripData.startCoords || !tripData.endCoords) {
-      dispatch(
-        showNotification({
-          message:
-            "Please ensure both start point and destination are set correctly.",
-          severity: "warning",
-        })
-      );
-      return;
-    }
-
-    return true;
-  };
 
   const handleClick = () => {
     if (isAnimating) return;
@@ -293,11 +253,9 @@ const AnimatedTravelButton = ({ t, isMobile }) => {
       return;
     }
 
-    if (!validateTripData()) return;
-
     setIsAnimating(true);
     setTimeout(() => {
-      navigate("/book-travel");
+      navigate("/book-tow-driver");
       setIsAnimating(false);
     }, 2000);
   };
@@ -340,12 +298,12 @@ const AnimatedTravelButton = ({ t, isMobile }) => {
           color: "white",
         }}
       >
-        {t("dashboard.book_travel")}
+        Tow Vehicle
         <Typography
           variant="caption"
           sx={{ display: "block", mt: 0.5, opacity: 0.8, fontSize: "0.7rem" }}
         >
-          {t("dashboard.sub_travel")}
+          Fast towing service
         </Typography>
       </Box>
 

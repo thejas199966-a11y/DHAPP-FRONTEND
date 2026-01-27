@@ -9,6 +9,8 @@ import themeReducer from "../features/themeSlice";
 import authModalReducer from "../features/authModalSlice";
 import tripReducer from "../features/tripSlice";
 import locationReducer from "../features/locationSlice";
+import towTruckDriverReducer from "../features/towTruckDriverSlice";
+import towTripReducer from "../features/towTripSlice";
 
 export const store = configureStore({
   reducer: {
@@ -22,5 +24,7 @@ export const store = configureStore({
     authModal: authModalReducer,
     trips: tripReducer,
     location: locationReducer,
+    towTruckDrivers: towTruckDriverReducer,
+    towTrips: towTripReducer
   },
 });
