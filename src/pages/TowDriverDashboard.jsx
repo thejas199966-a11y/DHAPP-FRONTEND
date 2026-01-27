@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  CircularProgress, Typography, useTheme, useMediaQuery, Badge, Alert
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  CircularProgress,
+  Alert,
+  Typography,
+  useTheme,
+  useMediaQuery,
+  Badge,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
@@ -12,55 +24,62 @@ import axios from "axios";
 import { fetchTowDriverProfile } from "../features/towTruckDriverSlice";
 import {
   fetchTowDriverOffers,
-  fetchMyTowBookings, 
+  fetchMyTowBookings,
   acceptTowTripOffer,
-  rejectTowTripOffer
+  rejectTowTripOffer,
 } from "../features/towTripSlice";
 import { showNotification } from "../features/notificationSlice";
 
 import BookingRequests from "../components/BookingRequests";
 import DashboardHome from "../components/DashboardHome";
 import AnimatedMenuIcon from "../components/AnimatedMenuIcon";
+import TowTrackingView from "../components/TowTrackingView";
 
 const drawerWidth = 240;
 const collapsedDrawerWidth = 60;
+const mobileDrawerWidth = "40vw";
+const mobileCollapsedDrawerWidth = "15vw";
 
 const TowDriverDashboard = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const theme = useTheme();
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [activeView, setActiveView] = useState("home");
   const [isCollapsed, setIsCollapsed] = useState(true);
 
-  // Auth & Profile
   const { token } = useSelector((state) => state.auth);
-  const { profile, profileStatus } = useSelector((state) => state.towTruckDrivers);
-  
-  // Trips Data
-  const { offers, bookings } = useSelector((state) => state.towTrips);
-
-  // Identify Active Trip
-  const activeTrip = bookings?.find(b => 
-    b.status === 'accepted' || b.status === 'in_progress' || b.status === 'arrived'
+  const { profile, profileStatus } = useSelector(
+    (state) => state.towTruckDrivers,
   );
-  
-  // --- POLLING FOR DATA ---
+  const {
+    offers,
+    bookings,
+    status: towTripsStatus,
+  } = useSelector((state) => state.towTrips);
+
+  const activeTrip = bookings?.find(
+    (b) =>
+      b.status === "accepted" ||
+      b.status === "in_progress" ||
+      b.status === "arrived",
+  );
+
   useEffect(() => {
     dispatch(fetchTowDriverProfile());
     dispatch(fetchTowDriverOffers());
-    dispatch(fetchMyTowBookings()); 
-    
+    dispatch(fetchMyTowBookings());
+
     const intervalId = setInterval(() => {
       dispatch(fetchTowDriverOffers());
       dispatch(fetchMyTowBookings());
-    }, 15000); 
+    }, 15000);
 
     return () => clearInterval(intervalId);
   }, [dispatch]);
 
-  // --- LOCATION TRACKING LOGIC (Conditional) ---
   useEffect(() => {
-    // STOP if no token or NO ACTIVE TRIP
     if (!token || !activeTrip) return;
 
     let locInterval;
@@ -69,32 +88,34 @@ const TowDriverDashboard = () => {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const payload = {
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude,
-                heading: pos.coords.heading || 0,
-                speed: pos.coords.speed || 0,
-                trip_id: activeTrip.id // Must exist
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              heading: pos.coords.heading || 0,
+              speed: pos.coords.speed || 0,
+              trip_id: activeTrip.id,
             };
 
-            axios.post(
+            axios
+              .post(
                 `${import.meta.env.VITE_API_BASE_URL}/tracking/update`,
                 payload,
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${token}` } },
               )
               .catch((err) => {
-                  console.error("Location update failed:", err);
-                  // Optional: if 403/400, maybe refresh bookings to see if trip was cancelled
-                  if (err.response && (err.response.status === 400 || err.response.status === 403)) {
-                      dispatch(fetchMyTowBookings());
-                  }
+                console.error("Location update failed:", err);
+                if (
+                  err.response &&
+                  (err.response.status === 400 || err.response.status === 403)
+                ) {
+                  dispatch(fetchMyTowBookings());
+                }
               });
           },
           (err) => console.error("Geolocation error:", err),
-          { enableHighAccuracy: true }
+          { enableHighAccuracy: true },
         );
       };
 
-      // Send immediately and then loop
       sendLocation();
       locInterval = setInterval(sendLocation, 15000);
     }
@@ -102,25 +123,52 @@ const TowDriverDashboard = () => {
     return () => {
       if (locInterval) clearInterval(locInterval);
     };
-  }, [token, activeTrip?.id]); // Depend strictly on activeTrip ID
+  }, [token, activeTrip?.id, dispatch]);
 
-  const handleDrawerToggle = () => setIsCollapsed(!isCollapsed);
+  const handleDrawerToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const handleMenuItemClick = (view) => {
+    setActiveView(view);
+    if (isMobile) setIsCollapsed(true);
+  };
 
   const handleAcceptOffer = (offerId) => {
     dispatch(acceptTowTripOffer(offerId))
       .unwrap()
       .then(() => {
-          dispatch(showNotification({ message: "Job Accepted!", severity: "success" }));
-          dispatch(fetchMyTowBookings()); // Refresh to trigger tracking
+        dispatch(
+          showNotification({ message: "Job Accepted!", severity: "success" }),
+        );
+        dispatch(fetchMyTowBookings());
       })
-      .catch(() => dispatch(showNotification({ message: "Failed to accept.", severity: "error" })));
+      .catch((err) => {
+        dispatch(
+          showNotification({
+            message: err.message || "Failed to accept.",
+            severity: "error",
+          }),
+        );
+      });
   };
 
   const handleRejectOffer = (offerId) => {
     dispatch(rejectTowTripOffer(offerId))
-        .unwrap()
-        .then(() => dispatch(showNotification({ message: "Job Rejected.", severity: "info" })))
-        .catch(() => dispatch(showNotification({ message: "Failed to reject.", severity: "error" })));
+      .unwrap()
+      .then(() => {
+        dispatch(
+          showNotification({ message: "Job Rejected.", severity: "info" }),
+        );
+      })
+      .catch((err) => {
+        dispatch(
+          showNotification({
+            message: err.message || "Failed to reject.",
+            severity: "error",
+          }),
+        );
+      });
   };
 
   const menuItems = [
@@ -137,12 +185,74 @@ const TowDriverDashboard = () => {
     { text: "My Jobs", icon: <LocalShippingIcon />, view: "mytrips" },
   ];
 
+  const currentDrawerWidth = isMobile
+    ? isCollapsed
+      ? mobileCollapsedDrawerWidth
+      : mobileDrawerWidth
+    : isCollapsed
+      ? collapsedDrawerWidth
+      : drawerWidth;
+
+  const drawerContent = (
+    <List>
+      <ListItem disablePadding>
+        <ListItemButton
+          onClick={handleDrawerToggle}
+          sx={{
+            justifyContent: isCollapsed ? "flex-start" : "flex-end",
+          }}
+        >
+          <AnimatedMenuIcon isOpen={!isCollapsed} />
+        </ListItemButton>
+      </ListItem>
+      {menuItems.map((item) => (
+        <ListItem key={item.text} disablePadding>
+          <ListItemButton
+            selected={activeView === item.view}
+            onClick={() => handleMenuItemClick(item.view)}
+            sx={{
+              justifyContent: isCollapsed ? "center" : "initial",
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: isCollapsed ? "auto" : 3,
+                justifyContent: "center",
+              }}
+            >
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText
+              primary={t(`tow_driver_dashboard.${item.view}_menu`, item.text)}
+              sx={{
+                opacity: isCollapsed ? 0 : 1,
+                "& .MuiTypography-root": {
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                },
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
+      ))}
+    </List>
+  );
+
   const renderContent = () => {
-    if (profileStatus === "loading") return <CircularProgress sx={{ display: "block", mx: "auto", mt: 5 }} />;
+    if (profileStatus === "loading" || towTripsStatus === "loading")
+      return <CircularProgress sx={{ display: "block", mx: "auto", mt: 5 }} />;
 
     switch (activeView) {
       case "home":
-        return <DashboardHome profile={profile} bookings={bookings} title="Tow Dashboard" />;
+        return (
+          <DashboardHome
+            profile={profile}
+            bookings={bookings}
+            title="Tow Dashboard"
+          />
+        );
       case "requests":
         return (
           <BookingRequests
@@ -154,20 +264,16 @@ const TowDriverDashboard = () => {
         );
       case "mytrips":
         return (
-             <Box>
-                <Typography variant="h5" gutterBottom>My Jobs</Typography>
-                {bookings && bookings.length > 0 ? (
-                    <BookingRequests 
-                        offers={bookings.map(b => ({ id: b.id, trip: b, status: b.status }))} 
-                        isHistory={true} 
-                    />
-                ) : (
-                    <Alert severity="info">No jobs history found.</Alert>
-                )}
-            </Box>
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Upcoming & Past Trips
+            </Typography>
+            {/* If you want to reuse the component for Bookings, you'd map bookings to a similar structure or create a new component */}
+            <Alert severity="info">Trip History view coming soon...</Alert>
+          </Box>
         );
       default:
-        return <DashboardHome />;
+        return <DashboardHome profile={profile} bookings={bookings} />;
     }
   };
 
@@ -176,33 +282,36 @@ const TowDriverDashboard = () => {
       <Drawer
         variant="permanent"
         sx={{
-          width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
+          width: currentDrawerWidth,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
+            width: currentDrawerWidth,
             boxSizing: "border-box",
+            position: "relative",
+            transition: theme.transitions.create("width", {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
             overflowX: "hidden",
-            transition: "width 0.3s",
           },
         }}
       >
-        <List>
-            <ListItem disablePadding>
-                <ListItemButton onClick={handleDrawerToggle}>
-                    <AnimatedMenuIcon isOpen={!isCollapsed} />
-                </ListItemButton>
-            </ListItem>
-            {menuItems.map((item) => (
-                <ListItem key={item.text} disablePadding>
-                    <ListItemButton onClick={() => setActiveView(item.view)}>
-                        <ListItemIcon>{item.icon}</ListItemIcon>
-                        <ListItemText primary={item.text} sx={{ opacity: isCollapsed ? 0 : 1 }} />
-                    </ListItemButton>
-                </ListItem>
-            ))}
-        </List>
+        {drawerContent}
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: `calc(100% - ${currentDrawerWidth})`,
+        }}
+        onClick={isMobile && !isCollapsed ? handleDrawerToggle : undefined}
+      >
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          {activeTrip
+            ? "Active Job"
+            : menuItems.find((item) => item.view === activeView)?.text}
+        </Typography>
         {renderContent()}
       </Box>
     </Box>

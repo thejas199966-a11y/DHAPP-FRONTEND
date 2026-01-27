@@ -56,7 +56,7 @@ const BookingRequests = ({ offers = [], onAccept, onReject }) => {
 
   return (
     <Grid container spacing={3}>
-      {offers.map((offer) => {
+      {offers?.map((offer) => {
         // Safe Trip Details from Backend
         const trip = offer.trip;
 

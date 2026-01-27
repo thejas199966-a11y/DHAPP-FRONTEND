@@ -18,10 +18,8 @@ import MainLayout from "./layouts/MainLayout";
 // Pages
 import UserDashboard from "./pages/Dashboard";
 import BookDriver from "./pages/BookDriver";
-import BookTravel from "./pages/BookTravel";
 import DriverDashboard from "./pages/DriverDashboard";
 import NotFound from "./pages/NotFound";
-import DriverDetailPage from "./pages/DriverDetailPage";
 import TowDriverDashboard from "./pages/TowDriverDashboard";
 import BookTowDriver from "./pages/BookTowDriver";
 
@@ -50,7 +48,7 @@ function App() {
             <Route
               path="/book-driver"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["user"]}>
                   <BookDriver />
                 </ProtectedRoute>
               }
@@ -58,24 +56,8 @@ function App() {
             <Route
               path="/book-tow-driver"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["user"]}>
                   <BookTowDriver />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/driver-detail"
-              element={
-                <ProtectedRoute>
-                  <DriverDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/book-travel"
-              element={
-                <ProtectedRoute>
-                  <BookTravel />
                 </ProtectedRoute>
               }
             />

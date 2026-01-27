@@ -88,15 +88,17 @@ const garageIcon = createIcon(garageSvg, [55, 55]);
 // --- MAP HELPERS ---
 const MapRecenter = ({ bounds }) => {
   const map = useMap();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   useEffect(() => {
     if (bounds && bounds.length > 0) {
       try {
-        map.fitBounds(bounds, { padding: [80, 80] });
+        map.fitBounds(bounds, { padding: isMobile ? [50, 50] : [80, 80] });
       } catch (e) {
         console.warn("Map bounds error", e);
       }
     }
-  }, [bounds, map]);
+  }, [bounds, map, isMobile]);
   return null;
 };
 
@@ -115,6 +117,7 @@ const MapInvalidator = () => {
 const TowTrackingView = ({ booking }) => {
   const dispatch = useDispatch();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const { token } = useSelector((state) => state.auth);
 
@@ -133,7 +136,9 @@ const TowTrackingView = ({ booking }) => {
         if (!address) return null;
         try {
           const res = await axios.get(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`,
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+              address,
+            )}`,
           );
           if (res.data && res.data.length > 0) {
             return {
@@ -148,8 +153,8 @@ const TowTrackingView = ({ booking }) => {
       };
 
       const loadCoords = async () => {
-        const start = await geocode(booking.start_location);
-        const end = await geocode(booking.end_location);
+        const start = await geocode(booking?.start_location);
+        const end = await geocode(booking?.end_location);
         setStartCoords(start);
         setEndCoords(end);
       };
@@ -159,12 +164,12 @@ const TowTrackingView = ({ booking }) => {
 
   // 2. Fetch Driver & Route
   const fetchDriverData = async () => {
-    if (!booking || booking.status !== "accepted") return;
+    if (!booking || booking?.status !== "accepted") return;
 
     setIsRefreshing(true);
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/tracking/${booking.id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/tracking/${booking?.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -178,7 +183,11 @@ const TowTrackingView = ({ booking }) => {
 
       // Calculate Route: Driver -> Pickup
       if (driverPos && startCoords) {
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${driverPos.lng},${driverPos.lat};${startCoords.lng},${startCoords.lat}?overview=full&geometries=geojson`;
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${
+          driverPos.lng
+        },${driverPos.lat};${
+          startCoords.lng
+        },${startCoords.lat}?overview=full&geometries=geojson`;
         const routeRes = await axios.get(osrmUrl);
         if (routeRes.data.routes && routeRes.data.routes.length > 0) {
           const coords = routeRes.data.routes[0].geometry.coordinates.map(
@@ -210,7 +219,7 @@ const TowTrackingView = ({ booking }) => {
       return;
     setIsCancelling(true);
     try {
-      await dispatch(cancelTowTrip(booking.id)).unwrap();
+      await dispatch(cancelTowTrip(booking?.id)).unwrap();
       dispatch(
         showNotification({ message: "Booking Cancelled", severity: "info" }),
       );
@@ -233,238 +242,22 @@ const TowTrackingView = ({ booking }) => {
   };
 
   return (
-    <Grid container spacing={3}>
-      {/* LEFT: INFO PANEL */}
-      <Grid item xs={12} md={4} order={{ xs: 2, md: 1 }}>
-        <Paper
-          elevation={4}
-          sx={{
-            p: 3,
-            borderRadius: 4,
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            background: "linear-gradient(to bottom right, #ffffff, #f9f9f9)",
-          }}
-        >
-          {/* Header */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {booking.status === "accepted" ? (
-                <CheckCircleIcon color="success" sx={{ fontSize: 36 }} />
-              ) : (
-                <CircularProgress size={30} sx={{ color: "orange" }} />
-              )}
-              <Box>
-                <Typography
-                  variant="h6"
-                  fontWeight="800"
-                  sx={{ lineHeight: 1 }}
-                >
-                  {booking.status === "accepted" ? "En Route" : "Searching"}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  TRIP #{booking.id}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Tooltip title="Refresh Location">
-              <IconButton
-                onClick={fetchDriverData}
-                disabled={isRefreshing || booking.status !== "accepted"}
-                sx={{ bgcolor: "white", boxShadow: 1 }}
-              >
-                <RefreshIcon
-                  fontSize="small"
-                  className={isRefreshing ? "spin-animation" : ""}
-                />
-              </IconButton>
-            </Tooltip>
-          </Box>
-
-          <Divider sx={{ mb: 3 }} />
-
-          {/* Locations */}
-          <Box sx={{ flexGrow: 1 }}>
-            {/* Pickup */}
-            <Box sx={{ display: "flex", gap: 2, mb: 0 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <PlaceIcon sx={{ color: "#D32F2F", fontSize: 28 }} />
-                <Box sx={{ width: 2, height: 40, bgcolor: "#eee", my: 0.5 }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="caption"
-                  fontWeight="bold"
-                  color="text.secondary"
-                >
-                  PICKUP POINT
-                </Typography>
-                <Typography variant="body2" fontWeight="500" sx={{ mb: 1 }}>
-                  {booking.start_location}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Dropoff */}
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <PlaceIcon sx={{ color: "#388E3C", fontSize: 28 }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="caption"
-                  fontWeight="bold"
-                  color="text.secondary"
-                >
-                  GARAGE / DESTINATION
-                </Typography>
-                <Typography variant="body2" fontWeight="500">
-                  {booking.end_location}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Driver Details (If accepted) */}
-            {booking.status === "accepted" && booking.tow_truck_driver && (
-              <Paper
-                variant="outlined"
-                sx={{
-                  mt: 3,
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: "#f8fdf8",
-                  borderColor: "#c8e6c9",
-                }}
-              >
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                  DRIVER DETAILS
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    component="img"
-                    src={
-                      booking.tow_truck_driver.profile_picture_url ||
-                      "https://cdn-icons-png.flaticon.com/512/3237/3237472.png"
-                    }
-                    sx={{
-                      width: 45,
-                      height: 45,
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      border: "2px solid #fff",
-                      boxShadow: 1,
-                    }}
-                  />
-                  <Box>
-                    <Typography variant="body2" fontWeight="bold">
-                      {booking.tow_truck_driver.name}
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 0.5,
-                        color: "text.secondary",
-                      }}
-                    >
-                      <PhoneIcon fontSize="inherit" />
-                      <Typography variant="caption">
-                        {booking.tow_truck_driver.phone_number}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <Box
-                  sx={{
-                    mt: 1,
-                    bgcolor: "#e8f5e9",
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    display: "inline-block",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    fontWeight="bold"
-                    color="success.main"
-                  >
-                    {booking.tow_truck_driver.vehicle_number}
-                  </Typography>
-                </Box>
-              </Paper>
-            )}
-          </Box>
-
-          <Button
-            variant="contained"
-            color="error"
-            fullWidth
-            startIcon={
-              isCancelling ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <CancelIcon />
-              )
-            }
-            onClick={handleCancel}
-            disabled={isCancelling}
-            sx={{
-              mt: 2,
-              py: 1.5,
-              borderRadius: 3,
-              fontWeight: "bold",
-              textTransform: "none",
-              boxShadow: "0 4px 12px rgba(211, 47, 47, 0.3)",
-            }}
-          >
-            {isCancelling ? "Cancelling..." : "Cancel Booking"}
-          </Button>
-        </Paper>
-      </Grid>
-
-      {/* RIGHT: MAP PANEL */}
-      <Grid
-        item
-        xs={12}
-        md={8}
-        order={{ xs: 1, md: 2 }}
-        sx={{ minWidth: "500px" }}
-      >
+    <Grid container spacing={2} direction="column">
+      {/* TOP: MAP PANEL */}
+      <Grid item xs={12} sx={{ p: 2 }}>
         <Paper
           elevation={4}
           sx={{
             borderRadius: 4,
             overflow: "hidden",
-            height: "650px",
-            minHeight: "400px",
+            height: "20vh",
+            minHeight: 200,
             position: "relative",
             bgcolor: "#e0e0e0", // Fallback color
             border: "4px solid white",
           }}
         >
-          {booking.status === "searching" ? (
+          {booking?.status === "searching" ? (
             <Box
               sx={{
                 height: "100%",
@@ -576,11 +369,222 @@ const TowTrackingView = ({ booking }) => {
                   color="#1976D2"
                   weight={6}
                   opacity={0.8}
-                  dashArray="1, 10" // Dotted line style? No, solid is better for route, maybe generic "10,10" if projected
                 />
               )}
             </MapContainer>
           )}
+        </Paper>
+      </Grid>
+
+      {/* BOTTOM: INFO PANEL */}
+      <Grid item xs={12} sx={{ p: 2 }}>
+        <Paper
+          elevation={4}
+          sx={{
+            p: { xs: 2, md: 3 },
+            borderRadius: 4,
+            display: "flex",
+            flexDirection: "column",
+            background: "linear-gradient(to bottom right, #ffffff, #f9f9f9)",
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              {booking?.status === "accepted" ? (
+                <CheckCircleIcon color="success" sx={{ fontSize: 36 }} />
+              ) : (
+                <CircularProgress size={30} sx={{ color: "orange" }} />
+              )}
+              <Box>
+                <Typography
+                  variant="h6"
+                  fontWeight="800"
+                  sx={{
+                    lineHeight: 1.1,
+                    fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                  }}
+                >
+                  {booking?.status === "accepted" ? "En Route" : "Searching"}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  TRIP #{booking?.id}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Tooltip title="Refresh Location">
+              <IconButton
+                onClick={fetchDriverData}
+                disabled={isRefreshing || booking?.status !== "accepted"}
+                sx={{ bgcolor: "white", boxShadow: 1 }}
+              >
+                <RefreshIcon
+                  fontSize="small"
+                  className={isRefreshing ? "spin-animation" : ""}
+                />
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          {/* Locations */}
+          <Box sx={{ flexGrow: 1 }}>
+            {/* Pickup */}
+            <Box sx={{ display: "flex", gap: 2, mb: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <PlaceIcon sx={{ color: "#D32F2F", fontSize: 28 }} />
+                <Box sx={{ width: 2, height: 40, bgcolor: "#eee", my: 0.5 }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  color="text.secondary"
+                >
+                  PICKUP POINT
+                </Typography>
+                <Typography variant="body2" fontWeight="500" sx={{ mb: 1 }}>
+                  {booking?.start_location}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Dropoff */}
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <PlaceIcon sx={{ color: "#388E3C", fontSize: 28 }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  color="text.secondary"
+                >
+                  DESTINATION
+                </Typography>
+                <Typography variant="body2" fontWeight="500">
+                  {booking?.end_location}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Driver Details (If accepted) */}
+            {booking?.status === "accepted" && booking?.tow_truck_driver && (
+              <Paper
+                variant="outlined"
+                sx={{
+                  mt: 3,
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: "#f8fdf8",
+                  borderColor: "#c8e6c9",
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                  DRIVER DETAILS
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Box
+                    component="img"
+                    src={
+                      booking?.tow_truck_driver.profile_picture_url ||
+                      "https://cdn-icons-png.flaticon.com/512/3237/3237472.png"
+                    }
+                    sx={{
+                      width: 45,
+                      height: 45,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "2px solid #fff",
+                      boxShadow: 1,
+                    }}
+                  />
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {booking?.tow_truck_driver.name}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        color: "text.secondary",
+                      }}
+                    >
+                      <PhoneIcon fontSize="inherit" />
+                      <Typography variant="caption">
+                        {booking?.tow_truck_driver.phone_number}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    mt: 1.5,
+                    bgcolor: "#e8f5e9",
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                    display: "inline-block",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    fontWeight="bold"
+                    color="success.main"
+                  >
+                    {booking?.tow_truck_driver.vehicle_number}
+                  </Typography>
+                </Box>
+              </Paper>
+            )}
+          </Box>
+
+          <Button
+            variant="contained"
+            color="error"
+            fullWidth
+            startIcon={
+              isCancelling ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <CancelIcon />
+              )
+            }
+            onClick={handleCancel}
+            disabled={isCancelling}
+            sx={{
+              mt: 2,
+              py: 1.2,
+              borderRadius: 3,
+              fontWeight: "bold",
+              textTransform: "none",
+              boxShadow: "0 4px 12px rgba(211, 47, 47, 0.3)",
+            }}
+          >
+            {isCancelling ? "Cancelling..." : "Cancel Booking"}
+          </Button>
         </Paper>
       </Grid>
 
