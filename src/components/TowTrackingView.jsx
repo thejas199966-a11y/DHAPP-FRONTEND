@@ -36,54 +36,24 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import { cancelTowTrip, fetchMyTowBookings } from "../features/towTripSlice";
 import { showNotification } from "../features/notificationSlice";
 
-// --- HIGH DEFINITION SVG ICONS ---
+// --- PNG ICONS ---
+import brokenCarPng from "../assets/images/brokenCar.png";
+import towTruckPng from "../assets/images/towTruck.png";
+import garagePng from "../assets/images/garage.png";
 
-// 1. Broken Car (Red Sedan with Open Hood & Smoke)
-const brokenCarSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs><filter id="s" x="0" y="0"><feDropShadow dx="1" dy="2" stdDeviation="1" flood-opacity="0.3"/></filter></defs>
-  <g filter="url(#s)">
-    <path d="M4,40 L60,40 L60,48 A4,4 0 0,1 56,52 L8,52 A4,4 0 0,1 4,48 Z" fill="#D32F2F"/>
-    <path d="M8,40 L14,24 L42,24 L56,40 Z" fill="#E57373"/>
-    <path d="M10,40 L16,26 L26,26 L20,40 Z" fill="#B71C1C" opacity="0.8"/> <path d="M14,46 A3,3 0 1,1 14,52 A3,3 0 1,1 14,46 M50,46 A3,3 0 1,1 50,52 A3,3 0 1,1 50,46" fill="#333"/>
-    <path d="M18,18 Q22,10 18,6 M24,20 Q28,10 24,4" stroke="#757575" stroke-width="2" fill="none"/> <rect x="28" y="28" width="16" height="8" fill="#81D4FA" opacity="0.6"/> </g>
-</svg>
-`;
-
-// 2. Tow Truck (Yellow Flatbed with Crane)
-const towTruckSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs><filter id="s2" x="0" y="0"><feDropShadow dx="1" dy="2" stdDeviation="1" flood-opacity="0.3"/></filter></defs>
-  <g filter="url(#s2)">
-    <path d="M4,36 L20,36 L20,24 L4,24 Z" fill="#FBC02D"/> <path d="M20,44 L60,44 L60,38 L20,38 Z" fill="#37474F"/> <path d="M30,38 L45,20 L48,20 L35,38 Z" fill="#424242"/> <circle cx="10" cy="46" r="5" fill="#212121"/> <circle cx="50" cy="46" r="5" fill="#212121"/> <circle cx="38" cy="46" r="5" fill="#212121"/> <path d="M45,20 L45,28" stroke="#000" stroke-width="1"/> <path d="M43,28 L47,28 L45,32 Z" fill="#000"/> <rect x="6" y="26" width="10" height="8" fill="#E1F5FE"/> </g>
-</svg>
-`;
-
-// 3. Garage (Building with Wrench)
-const garageSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs><filter id="s3" x="0" y="0"><feDropShadow dx="1" dy="2" stdDeviation="1" flood-opacity="0.3"/></filter></defs>
-  <g filter="url(#s3)">
-    <path d="M8,56 L56,56 L56,24 L32,8 L8,24 Z" fill="#4CAF50"/> <rect x="22" y="32" width="20" height="24" fill="#388E3C"/> <path d="M32,18 L32,24 M28,21 L36,21" stroke="#FFF" stroke-width="2"/>
-    <circle cx="32" cy="42" r="6" fill="#FFF"/>
-    <path d="M30,40 L34,44 M34,40 L30,44" stroke="#388E3C" stroke-width="2"/> <rect x="26" y="56" width="12" height="2" fill="#333"/>
-  </g>
-</svg>
-`;
-
-// Helper to create Leaflet Icon from SVG string
-const createIcon = (svgString, size = [50, 50]) => {
+// Helper to create Leaflet Icon from PNG
+const createIcon = (iconUrl, size = [50, 50]) => {
   return new L.Icon({
-    iconUrl: `data:image/svg+xml;base64,${btoa(svgString)}`,
+    iconUrl,
     iconSize: size,
-    iconAnchor: [size[0] / 2, size[1] / 2], // Center anchor
-    popupAnchor: [0, -size[1] / 2],
+    iconAnchor: [size[0] / 2, size[1]], // Anchor at bottom-center
+    popupAnchor: [0, -size[1]],
   });
 };
 
-const brokenCarIcon = createIcon(brokenCarSvg, [60, 60]);
-const towTruckIcon = createIcon(towTruckSvg, [60, 60]);
-const garageIcon = createIcon(garageSvg, [55, 55]);
+const brokenCarIcon = createIcon(brokenCarPng, [60, 40]);
+const towTruckIcon = createIcon(towTruckPng, [60, 40]);
+const garageIcon = createIcon(garagePng, [35, 35]);
 
 // --- MAP HELPERS ---
 const MapRecenter = ({ bounds }) => {
