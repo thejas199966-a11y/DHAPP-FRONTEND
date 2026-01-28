@@ -3,12 +3,10 @@ import {
   Container,
   Paper,
   Typography,
-  Box,
   Button,
   Grid,
   CircularProgress,
   useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -22,12 +20,14 @@ import TowTrackingView from "../components/TowTrackingView";
 
 export default function BookTowDriver() {
   const dispatch = useDispatch();
+  const theme = useTheme();
 
   const { bookings: towBookings } = useSelector((state) => state.towTrips);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeBooking, setActiveBooking] = useState(null);
 
+  // Local State
   const [plannerData, setPlannerData] = useState({
     startPoint: "",
     destination: "",
@@ -36,12 +36,17 @@ export default function BookTowDriver() {
     vehicleType: "CAR",
   });
 
-  // 1. Fetch My Tow Bookings
+  // Check if form is valid (strict check for coordinates)
+  const isValid =
+    plannerData.startCoords !== null &&
+    plannerData.endCoords !== null &&
+    plannerData.startPoint.length > 0 &&
+    plannerData.destination.length > 0;
+
   useEffect(() => {
     dispatch(fetchMyTowBookings());
   }, [dispatch]);
 
-  // 2. Determine Active Booking
   useEffect(() => {
     const active = towBookings.find(
       (trip) =>
@@ -52,24 +57,15 @@ export default function BookTowDriver() {
     setActiveBooking(active || null);
   }, [towBookings]);
 
-  // Callback to receive data from child component
   const handlePlanChange = (data) => {
     setPlannerData(data);
   };
 
-  // Handler: Create Booking
   const handleBook = async () => {
-    // Validation using local state
-    if (
-      !plannerData.startPoint ||
-      !plannerData.destination ||
-      !plannerData.startCoords ||
-      !plannerData.endCoords
-    ) {
+    if (!isValid) {
       dispatch(
         showNotification({
-          message:
-            "Please select valid pickup and destination points from suggestions.",
+          message: "Please select valid Bengaluru locations.",
           severity: "warning",
         }),
       );
@@ -115,27 +111,27 @@ export default function BookTowDriver() {
       </Typography>
 
       {activeBooking ? (
-        // RENDER TRACKING VIEW
         <TowTrackingView booking={activeBooking} />
       ) : (
-        // RENDER BOOKING FORM
         <Paper
           elevation={4}
           sx={{
             p: { xs: 3, md: 5 },
             borderRadius: 4,
-            maxWidth: "1100px", // Increased width for better map view
+            maxWidth: "1100px",
             mx: "auto",
             background: "linear-gradient(to bottom, #ffffff, #fafafa)",
           }}
         >
-          {/* Integrated Planner Component */}
           <TowTripPlanner onPlanChange={handlePlanChange} />
 
           <Grid container spacing={4} sx={{ mt: 1 }}>
-            {/* Spacer Grid to align button right */}
-            <Grid item xs={12} md={7}></Grid>
-
+            <Grid
+              item
+              xs={12}
+              md={7}
+              sx={{ display: { xs: "none", md: "block" } }}
+            ></Grid>
             <Grid
               item
               xs={12}
@@ -147,7 +143,7 @@ export default function BookTowDriver() {
                 variant="contained"
                 size="large"
                 onClick={handleBook}
-                disabled={isProcessing}
+                disabled={isProcessing || !isValid}
                 sx={{
                   bgcolor: "black",
                   color: "white",
@@ -157,6 +153,7 @@ export default function BookTowDriver() {
                   fontWeight: "bold",
                   boxShadow: "0 10px 20px rgba(0,0,0,0.2)",
                   "&:hover": { bgcolor: "#333", transform: "translateY(-2px)" },
+                  "&:disabled": { bgcolor: "#ccc", cursor: "not-allowed" },
                   transition: "all 0.3s",
                 }}
               >

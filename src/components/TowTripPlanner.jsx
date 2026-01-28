@@ -160,8 +160,9 @@ const LocationAutocomplete = ({
     }
     setLoading(true);
     try {
+      // Prioritize Bengaluru using viewbox, but strict check happens on selection
       const res = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&addressdetails=1&limit=5`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&addressdetails=1&limit=5&viewbox=77.3,13.2,77.9,12.8`,
       );
       setSuggestions(res.data);
       setOpen(true);
@@ -259,15 +260,9 @@ export default function TowTripPlanner({ onPlanChange }) {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const dispatch = useDispatch();
 
-  // Redux: Only usage of location slice (retained from TripPlanner)
-  const {
-    initialLocation,
-    initialAddress,
-    loading: locationLoading,
-    error: locationError,
-  } = useSelector((state) => state.location);
+  const { loading: locationLoading } = useSelector((state) => state.location);
 
-  // Local State (Replicating TripPlanner logic locally)
+  // Local State
   const [formData, setFormData] = useState({
     startPoint: "",
     destination: "",
@@ -276,36 +271,85 @@ export default function TowTripPlanner({ onPlanChange }) {
     vehicleType: "CAR",
   });
 
-  // Map State
-  const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
+  const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]); // Default Bengaluru
   const [routePositions, setRoutePositions] = useState([]);
 
-  // Loading state derived from location slice
   const loading = locationLoading === "pending" || locationLoading === "idle";
 
-  // Effect: Handle Location Redux Updates (Auto-populate)
-  useEffect(() => {
-    if (locationError) {
-      dispatch(showNotification({ message: locationError, severity: "info" }));
-    }
-    if (initialLocation && initialAddress) {
-      setMapCenter([initialLocation.lat, initialLocation.lng]);
-      setFormData((prev) => ({
-        ...prev,
-        startCoords: initialLocation,
-        startPoint: initialAddress,
-      }));
-    }
-  }, [initialLocation, initialAddress, locationError, dispatch]);
+  // --- VALIDATION LOGIC ---
+  const isLocationInBengaluru = (data) => {
+    // 1. Text Search (City/District)
+    const addressString = JSON.stringify(data).toLowerCase();
+    const keywords = ["bengaluru", "bangalore"];
+    const hasKeyword = keywords.some((k) => addressString.includes(k));
 
-  // Effect: Notify Parent Component
-  useEffect(() => {
-    if (onPlanChange) {
-      onPlanChange(formData);
+    if (hasKeyword) return true;
+
+    // 2. Coordinate Bounding Box (Lat 12.3-13.5, Lng 77.0-78.2)
+    const lat = parseFloat(data.lat);
+    const lon = parseFloat(data.lon);
+
+    if (lat >= 12.3 && lat <= 13.5 && lon >= 77.0 && lon <= 78.2) {
+      return true;
     }
+    return false;
+  };
+
+  const showRestrictionAlert = () => {
+    dispatch(
+      showNotification({
+        message: "Service available only within Bengaluru District.",
+        severity: "error",
+      }),
+    );
+  };
+
+  // --- SYNC WITH PARENT ---
+  useEffect(() => {
+    onPlanChange(formData);
   }, [formData, onPlanChange]);
 
-  // Effect: Fetch Route (OSRM)
+  // --- INITIAL GEOLOCATION ---
+  useEffect(() => {
+    if (navigator.geolocation && !formData.startCoords) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+
+          try {
+            const res = await axios.get(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+            );
+
+            // STRICT CHECK: Only auto-fill if within Bengaluru
+            if (
+              isLocationInBengaluru({
+                ...res.data,
+                lat: latitude,
+                lon: longitude,
+              })
+            ) {
+              setMapCenter([latitude, longitude]);
+              setFormData((prev) => ({
+                ...prev,
+                startCoords: { lat: latitude, lng: longitude },
+                startPoint: res.data.display_name,
+              }));
+            } else {
+              showRestrictionAlert();
+              // Do not set startCoords, just center map to Bengaluru
+              setMapCenter([12.9716, 77.5946]);
+            }
+          } catch (e) {
+            setMapCenter([12.9716, 77.5946]);
+          }
+        },
+        (err) => console.log("Geolocation error:", err),
+      );
+    }
+  }, []);
+
+  // --- ROUTING LOGIC ---
   const fetchRoute = async (start, end) => {
     if (!start || !end) return;
 
@@ -332,31 +376,55 @@ export default function TowTripPlanner({ onPlanChange }) {
     }
   }, [formData.startCoords, formData.endCoords]);
 
-  // --- HANDLER: Manual Search (Replicated from TripPlanner) ---
-  const handleSearchLocation = async (type) => {
+  // --- HANDLERS (STRICT UPDATES) ---
+
+  const handleManualSearch = async (type) => {
     const query = type === "start" ? formData.startPoint : formData.destination;
     if (!query) return;
 
     try {
       const res = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&addressdetails=1`,
       );
       if (res.data.length > 0) {
-        const { lat, lon, display_name } = res.data[0];
-        const newCoords = { lat: parseFloat(lat), lng: parseFloat(lon) };
+        const item = res.data[0];
 
+        // STRICT CHECK
+        if (!isLocationInBengaluru(item)) {
+          showRestrictionAlert();
+          // Clear invalid data to prevent booking
+          if (type === "start") {
+            setFormData((prev) => ({
+              ...prev,
+              startPoint: "",
+              startCoords: null,
+            }));
+          } else {
+            setFormData((prev) => ({
+              ...prev,
+              destination: "",
+              endCoords: null,
+            }));
+          }
+          return;
+        }
+
+        const newCoords = {
+          lat: parseFloat(item.lat),
+          lng: parseFloat(item.lon),
+        };
         if (type === "start") {
           setFormData((prev) => ({
             ...prev,
             startCoords: newCoords,
-            startPoint: display_name, // Update text to match result
+            startPoint: item.display_name,
           }));
           setMapCenter([newCoords.lat, newCoords.lng]);
         } else {
           setFormData((prev) => ({
             ...prev,
             endCoords: newCoords,
-            destination: display_name,
+            destination: item.display_name,
           }));
         }
       } else {
@@ -377,8 +445,12 @@ export default function TowTripPlanner({ onPlanChange }) {
     }
   };
 
-  // --- HANDLERS: Autocomplete Selection ---
   const handleStartSelect = (item) => {
+    if (!isLocationInBengaluru(item)) {
+      showRestrictionAlert();
+      setFormData((prev) => ({ ...prev, startPoint: "", startCoords: null })); // Explicitly clear
+      return;
+    }
     const coords = { lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
     setFormData((prev) => ({
       ...prev,
@@ -389,6 +461,11 @@ export default function TowTripPlanner({ onPlanChange }) {
   };
 
   const handleDestSelect = (item) => {
+    if (!isLocationInBengaluru(item)) {
+      showRestrictionAlert();
+      setFormData((prev) => ({ ...prev, destination: "", endCoords: null })); // Explicitly clear
+      return;
+    }
     const coords = { lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
     setFormData((prev) => ({
       ...prev,
@@ -397,15 +474,23 @@ export default function TowTripPlanner({ onPlanChange }) {
     }));
   };
 
-  // --- HANDLER: Marker Drag (Reverse Geocoding) ---
+  // --- MARKER DRAG (STRICT) ---
   const handleMarkerDrag = async (e, type) => {
     const { lat, lng } = e.target.getLatLng();
     const newCoords = { lat, lng };
 
     try {
       const res = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
       );
+
+      // STRICT CHECK
+      if (!isLocationInBengaluru({ ...res.data, lat, lon: lng })) {
+        showRestrictionAlert();
+        // Do not update coords if outside bounds
+        return;
+      }
+
       const address = res.data.display_name;
       if (type === "start") {
         setFormData((prev) => ({
@@ -421,11 +506,7 @@ export default function TowTripPlanner({ onPlanChange }) {
         }));
       }
     } catch (error) {
-      if (type === "start") {
-        setFormData((prev) => ({ ...prev, startCoords: newCoords }));
-      } else {
-        setFormData((prev) => ({ ...prev, endCoords: newCoords }));
-      }
+      // Do nothing on error
     }
   };
 
@@ -441,19 +522,14 @@ export default function TowTripPlanner({ onPlanChange }) {
   return (
     <Container
       maxWidth="xl"
-      sx={{
-        mt: 3,
-        mb: 2,
-        mx: isMobile ? 0 : 2,
-        px: isMobile ? 1 : 2,
-      }}
+      sx={{ mt: 3, mb: 2, mx: isMobile ? 0 : 2, px: isMobile ? 1 : 2 }}
     >
       <Grid
         container
         spacing={2}
         sx={{ display: "flex", flexDirection: isMobile ? "column" : "row" }}
       >
-        {/* --- LEFT PANEL: FORM --- */}
+        {/* FORM PANEL */}
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: isMobile ? 2 : 3 }}>
             {loading ? (
@@ -468,12 +544,6 @@ export default function TowTripPlanner({ onPlanChange }) {
                 <Skeleton
                   variant="rectangular"
                   height={56}
-                  width="100%"
-                  sx={{ mb: 3 }}
-                />
-                <Skeleton
-                  variant="rectangular"
-                  height={100}
                   width="100%"
                   sx={{ mb: 3 }}
                 />
@@ -494,26 +564,35 @@ export default function TowTripPlanner({ onPlanChange }) {
                   <LocationAutocomplete
                     label="Pickup Location"
                     value={formData.startPoint}
+                    // IMPORTANT: Clear coords on text change to prevent stale valid coords
                     onChange={(val) =>
-                      setFormData((prev) => ({ ...prev, startPoint: val }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        startPoint: val,
+                        startCoords: null,
+                      }))
                     }
                     onSelect={handleStartSelect}
-                    onManualSearch={() => handleSearchLocation("start")}
+                    onManualSearch={() => handleManualSearch("start")}
                     icon={<MyLocationIcon color="success" />}
                   />
 
                   <LocationAutocomplete
                     label="Destination / Garage"
                     value={formData.destination}
+                    // IMPORTANT: Clear coords on text change
                     onChange={(val) =>
-                      setFormData((prev) => ({ ...prev, destination: val }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        destination: val,
+                        endCoords: null,
+                      }))
                     }
                     onSelect={handleDestSelect}
-                    onManualSearch={() => handleSearchLocation("end")}
+                    onManualSearch={() => handleManualSearch("end")}
                     icon={<FmdGoodIcon color="error" />}
                   />
 
-                  {/* Vehicle Selection Integration */}
                   <Typography
                     variant="subtitle1"
                     fontWeight="bold"
@@ -606,7 +685,7 @@ export default function TowTripPlanner({ onPlanChange }) {
           </Paper>
         </Grid>
 
-        {/* --- RIGHT PANEL: MAP --- */}
+        {/* MAP PANEL */}
         <Grid item xs={12} md={8} sx={!isMobile ? { minWidth: "500px" } : {}}>
           <Paper
             elevation={3}
@@ -645,12 +724,10 @@ export default function TowTripPlanner({ onPlanChange }) {
                     attribution="&copy; OpenStreetMap"
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
-
                   <MapController
                     center={mapCenter}
                     routeBounds={routePositions}
                   />
-
                   <RecenterControl
                     mapCenter={mapCenter}
                     startCoords={formData.startCoords}
