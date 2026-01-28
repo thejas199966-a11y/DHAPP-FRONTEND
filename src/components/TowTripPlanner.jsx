@@ -18,6 +18,8 @@ import {
   ListItemText,
   CircularProgress,
   ClickAwayListener,
+  Divider,
+  Chip,
 } from "@mui/material";
 import {
   MapContainer,
@@ -39,6 +41,9 @@ import NavigationIcon from "@mui/icons-material/Navigation";
 import GpsFixedIcon from "@mui/icons-material/GpsFixed";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import StraightenIcon from "@mui/icons-material/Straighten";
 
 // Redux
 import { useSelector, useDispatch } from "react-redux";
@@ -160,7 +165,6 @@ const LocationAutocomplete = ({
     }
     setLoading(true);
     try {
-      // Prioritize Bengaluru using viewbox, but strict check happens on selection
       const res = await axios.get(
         `https://nominatim.openstreetmap.org/search?format=json&q=${query}&addressdetails=1&limit=5&viewbox=77.3,13.2,77.9,12.8`,
       );
@@ -259,6 +263,7 @@ export default function TowTripPlanner({ onPlanChange }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const dispatch = useDispatch();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const { loading: locationLoading } = useSelector((state) => state.location);
 
@@ -271,24 +276,24 @@ export default function TowTripPlanner({ onPlanChange }) {
     vehicleType: "CAR",
   });
 
-  const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]); // Default Bengaluru
+  const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]);
   const [routePositions, setRoutePositions] = useState([]);
+
+  // --- PRICING STATE ---
+  const [priceDetails, setPriceDetails] = useState(null);
+  const [calculatingPrice, setCalculatingPrice] = useState(false);
 
   const loading = locationLoading === "pending" || locationLoading === "idle";
 
   // --- VALIDATION LOGIC ---
   const isLocationInBengaluru = (data) => {
-    // 1. Text Search (City/District)
     const addressString = JSON.stringify(data).toLowerCase();
     const keywords = ["bengaluru", "bangalore"];
     const hasKeyword = keywords.some((k) => addressString.includes(k));
-
     if (hasKeyword) return true;
 
-    // 2. Coordinate Bounding Box (Lat 12.3-13.5, Lng 77.0-78.2)
     const lat = parseFloat(data.lat);
     const lon = parseFloat(data.lon);
-
     if (lat >= 12.3 && lat <= 13.5 && lon >= 77.0 && lon <= 78.2) {
       return true;
     }
@@ -306,8 +311,67 @@ export default function TowTripPlanner({ onPlanChange }) {
 
   // --- SYNC WITH PARENT ---
   useEffect(() => {
-    onPlanChange(formData);
-  }, [formData, onPlanChange]);
+    if (onPlanChange) {
+      // Pass calculated price back to parent as well if needed
+      onPlanChange({
+        ...formData,
+        estimatedPrice: priceDetails?.estimation?.final_price,
+      });
+    }
+  }, [formData, priceDetails, onPlanChange]);
+
+  // --- PRICE CALCULATION LOGIC ---
+  useEffect(() => {
+    const fetchPrice = async () => {
+      if (!formData.startCoords || !formData.endCoords) {
+        setPriceDetails(null);
+        return;
+      }
+
+      setCalculatingPrice(true);
+      try {
+        // Prepare Payload (Form Data)
+        const params = new URLSearchParams();
+        params.append("start_lat", formData.startCoords.lat);
+        params.append("start_lng", formData.startCoords.lng);
+        params.append("dest_lat", formData.endCoords.lat);
+        params.append("dest_lng", formData.endCoords.lng);
+        params.append("vehicle_type", formData.vehicleType);
+
+        const res = await axios.post(
+          `${API_BASE_URL}/pricing/calculate-tow`,
+          params,
+          {
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          },
+        );
+
+        if (res.data.payload) {
+          // Decode Base64 Response
+          const jsonStr = atob(res.data.payload);
+          const data = JSON.parse(jsonStr);
+          setPriceDetails(data);
+        }
+      } catch (error) {
+        console.error("Pricing API Error:", error);
+        // Optional: Dispatch notification on failure
+      } finally {
+        setCalculatingPrice(false);
+      }
+    };
+
+    // Debounce slightly to avoid spamming API on drag
+    const timeoutId = setTimeout(() => {
+      fetchPrice();
+    }, 800);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    formData.startCoords,
+    formData.endCoords,
+    formData.vehicleType,
+    API_BASE_URL,
+  ]);
 
   // --- INITIAL GEOLOCATION ---
   useEffect(() => {
@@ -315,13 +379,10 @@ export default function TowTripPlanner({ onPlanChange }) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
-
           try {
             const res = await axios.get(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
             );
-
-            // STRICT CHECK: Only auto-fill if within Bengaluru
             if (
               isLocationInBengaluru({
                 ...res.data,
@@ -337,7 +398,6 @@ export default function TowTripPlanner({ onPlanChange }) {
               }));
             } else {
               showRestrictionAlert();
-              // Do not set startCoords, just center map to Bengaluru
               setMapCenter([12.9716, 77.5946]);
             }
           } catch (e) {
@@ -352,11 +412,9 @@ export default function TowTripPlanner({ onPlanChange }) {
   // --- ROUTING LOGIC ---
   const fetchRoute = async (start, end) => {
     if (!start || !end) return;
-
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
       const res = await axios.get(url);
-
       if (res.data.routes && res.data.routes.length > 0) {
         const coordinates = res.data.routes[0].geometry.coordinates.map(
           (coord) => [coord[1], coord[0]],
@@ -376,39 +434,32 @@ export default function TowTripPlanner({ onPlanChange }) {
     }
   }, [formData.startCoords, formData.endCoords]);
 
-  // --- HANDLERS (STRICT UPDATES) ---
-
+  // --- HANDLERS ---
   const handleManualSearch = async (type) => {
     const query = type === "start" ? formData.startPoint : formData.destination;
     if (!query) return;
-
     try {
       const res = await axios.get(
         `https://nominatim.openstreetmap.org/search?format=json&q=${query}&addressdetails=1`,
       );
       if (res.data.length > 0) {
         const item = res.data[0];
-
-        // STRICT CHECK
         if (!isLocationInBengaluru(item)) {
           showRestrictionAlert();
-          // Clear invalid data to prevent booking
-          if (type === "start") {
+          if (type === "start")
             setFormData((prev) => ({
               ...prev,
               startPoint: "",
               startCoords: null,
             }));
-          } else {
+          else
             setFormData((prev) => ({
               ...prev,
               destination: "",
               endCoords: null,
             }));
-          }
           return;
         }
-
         const newCoords = {
           lat: parseFloat(item.lat),
           lng: parseFloat(item.lon),
@@ -448,7 +499,7 @@ export default function TowTripPlanner({ onPlanChange }) {
   const handleStartSelect = (item) => {
     if (!isLocationInBengaluru(item)) {
       showRestrictionAlert();
-      setFormData((prev) => ({ ...prev, startPoint: "", startCoords: null })); // Explicitly clear
+      setFormData((prev) => ({ ...prev, startPoint: "", startCoords: null }));
       return;
     }
     const coords = { lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
@@ -463,7 +514,7 @@ export default function TowTripPlanner({ onPlanChange }) {
   const handleDestSelect = (item) => {
     if (!isLocationInBengaluru(item)) {
       showRestrictionAlert();
-      setFormData((prev) => ({ ...prev, destination: "", endCoords: null })); // Explicitly clear
+      setFormData((prev) => ({ ...prev, destination: "", endCoords: null }));
       return;
     }
     const coords = { lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
@@ -474,23 +525,17 @@ export default function TowTripPlanner({ onPlanChange }) {
     }));
   };
 
-  // --- MARKER DRAG (STRICT) ---
   const handleMarkerDrag = async (e, type) => {
     const { lat, lng } = e.target.getLatLng();
     const newCoords = { lat, lng };
-
     try {
       const res = await axios.get(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
       );
-
-      // STRICT CHECK
       if (!isLocationInBengaluru({ ...res.data, lat, lon: lng })) {
         showRestrictionAlert();
-        // Do not update coords if outside bounds
         return;
       }
-
       const address = res.data.display_name;
       if (type === "start") {
         setFormData((prev) => ({
@@ -505,9 +550,7 @@ export default function TowTripPlanner({ onPlanChange }) {
           destination: address,
         }));
       }
-    } catch (error) {
-      // Do nothing on error
-    }
+    } catch (error) {}
   };
 
   const onStartDrag = useMemo(
@@ -529,7 +572,7 @@ export default function TowTripPlanner({ onPlanChange }) {
         spacing={2}
         sx={{ display: "flex", flexDirection: isMobile ? "column" : "row" }}
       >
-        {/* FORM PANEL */}
+        {/* LEFT PANEL: FORM */}
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: isMobile ? 2 : 3 }}>
             {loading ? (
@@ -544,6 +587,12 @@ export default function TowTripPlanner({ onPlanChange }) {
                 <Skeleton
                   variant="rectangular"
                   height={56}
+                  width="100%"
+                  sx={{ mb: 3 }}
+                />
+                <Skeleton
+                  variant="rectangular"
+                  height={100}
                   width="100%"
                   sx={{ mb: 3 }}
                 />
@@ -564,7 +613,6 @@ export default function TowTripPlanner({ onPlanChange }) {
                   <LocationAutocomplete
                     label="Pickup Location"
                     value={formData.startPoint}
-                    // IMPORTANT: Clear coords on text change to prevent stale valid coords
                     onChange={(val) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -580,7 +628,6 @@ export default function TowTripPlanner({ onPlanChange }) {
                   <LocationAutocomplete
                     label="Destination / Garage"
                     value={formData.destination}
-                    // IMPORTANT: Clear coords on text change
                     onChange={(val) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -679,13 +726,115 @@ export default function TowTripPlanner({ onPlanChange }) {
                       </CardContent>
                     </Card>
                   </Box>
+
+                  {/* PRICE DISPLAY SECTION */}
+                  {formData.startCoords && formData.endCoords && (
+                    <Box sx={{ mt: 3 }}>
+                      <Divider sx={{ mb: 2 }} />
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        ESTIMATED FARE
+                      </Typography>
+
+                      {calculatingPrice ? (
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                        >
+                          <CircularProgress size={20} />
+                          <Typography variant="body2">
+                            Calculating best price...
+                          </Typography>
+                        </Box>
+                      ) : priceDetails ? (
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            bgcolor: "#f1f8e9",
+                            p: 2,
+                            borderRadius: 2,
+                            border: "1px solid #c5e1a5",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              mb: 1,
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <CurrencyRupeeIcon
+                                sx={{ fontSize: 28, color: "green", mr: 0.5 }}
+                              />
+                              <Typography
+                                variant="h4"
+                                fontWeight="bold"
+                                color="green"
+                              >
+                                {priceDetails.estimation.final_price}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label={
+                                priceDetails.estimation.breakdown.time_slot
+                              }
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
+                          </Box>
+
+                          <Grid container spacing={1}>
+                            <Grid item xs={6}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  color: "text.secondary",
+                                }}
+                              >
+                                <StraightenIcon
+                                  fontSize="small"
+                                  sx={{ mr: 0.5 }}
+                                />
+                                <Typography variant="caption">
+                                  {priceDetails.distance_km} km
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  color: "text.secondary",
+                                }}
+                              >
+                                <AccessTimeIcon
+                                  fontSize="small"
+                                  sx={{ mr: 0.5 }}
+                                />
+                                <Typography variant="caption">
+                                  ~{priceDetails.duration_min} mins
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </Paper>
+                      ) : null}
+                    </Box>
+                  )}
                 </Box>
               </>
             )}
           </Paper>
         </Grid>
 
-        {/* MAP PANEL */}
+        {/* RIGHT PANEL: MAP */}
         <Grid item xs={12} md={8} sx={!isMobile ? { minWidth: "500px" } : {}}>
           <Paper
             elevation={3}
