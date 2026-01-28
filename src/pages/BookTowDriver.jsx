@@ -7,8 +7,6 @@ import {
   Button,
   Grid,
   CircularProgress,
-  Card,
-  CardContent,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -19,23 +17,24 @@ import { createTowTrip, fetchMyTowBookings } from "../features/towTripSlice";
 import { showNotification } from "../features/notificationSlice";
 
 // Components
-import TripPlanner from "../components/TripPlanner";
-import TowTrackingView from "../components/TowTrackingView"; // New Component
-
-// Icons
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
-import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import TowTripPlanner from "../components/TowTripPlanner";
+import TowTrackingView from "../components/TowTrackingView";
 
 export default function BookTowDriver() {
   const dispatch = useDispatch();
 
-  const { tripData } = useSelector((state) => state.user);
   const { bookings: towBookings } = useSelector((state) => state.towTrips);
 
-  const [vehicleType, setVehicleType] = useState("CAR");
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeBooking, setActiveBooking] = useState(null);
+
+  const [plannerData, setPlannerData] = useState({
+    startPoint: "",
+    destination: "",
+    startCoords: null,
+    endCoords: null,
+    vehicleType: "CAR",
+  });
 
   // 1. Fetch My Tow Bookings
   useEffect(() => {
@@ -53,11 +52,26 @@ export default function BookTowDriver() {
     setActiveBooking(active || null);
   }, [towBookings]);
 
+  // Callback to receive data from child component
+  const handlePlanChange = (data) => {
+    setPlannerData(data);
+  };
+
   // Handler: Create Booking
   const handleBook = async () => {
-    if (!tripData?.startPoint || !tripData?.destination) {
+    // Validation using local state
+    if (
+      !plannerData.startPoint ||
+      !plannerData.destination ||
+      !plannerData.startCoords ||
+      !plannerData.endCoords
+    ) {
       dispatch(
-        showNotification({ message: "Select locations", severity: "warning" }),
+        showNotification({
+          message:
+            "Please select valid pickup and destination points from suggestions.",
+          severity: "warning",
+        }),
       );
       return;
     }
@@ -65,9 +79,9 @@ export default function BookTowDriver() {
     setIsProcessing(true);
     const payload = {
       hiring_type: "Tow Service",
-      vehicle_type: vehicleType,
-      start_location: tripData.startPoint,
-      end_location: tripData.destination,
+      vehicle_type: plannerData.vehicleType,
+      start_location: plannerData.startPoint,
+      end_location: plannerData.destination,
       start_date: new Date().toISOString().split("T")[0],
       end_date: new Date().toISOString().split("T")[0],
       reason: "Vehicle Breakdown",
@@ -110,101 +124,18 @@ export default function BookTowDriver() {
           sx={{
             p: { xs: 3, md: 5 },
             borderRadius: 4,
-            maxWidth: "1000px",
+            maxWidth: "1100px", // Increased width for better map view
             mx: "auto",
             background: "linear-gradient(to bottom, #ffffff, #fafafa)",
           }}
         >
-          <TripPlanner />
+          {/* Integrated Planner Component */}
+          <TowTripPlanner onPlanChange={handlePlanChange} />
 
-          <Grid container spacing={4} sx={{ mt: 3 }}>
-            <Grid item xs={12} md={7}>
-              <Typography
-                variant="h6"
-                fontWeight="bold"
-                gutterBottom
-                color="text.secondary"
-              >
-                SELECT VEHICLE TYPE
-              </Typography>
-              <Box sx={{ display: "flex", gap: 3, mt: 1 }}>
-                <Card
-                  variant="outlined"
-                  sx={{
-                    flex: 1,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    bgcolor: vehicleType === "CAR" ? "#e3f2fd" : "white",
-                    borderColor: vehicleType === "CAR" ? "#2196f3" : "divider",
-                    borderWidth: vehicleType === "CAR" ? 2 : 1,
-                    boxShadow: vehicleType === "CAR" ? 4 : 0,
-                    transform:
-                      vehicleType === "CAR" ? "scale(1.02)" : "scale(1)",
-                  }}
-                  onClick={() => setVehicleType("CAR")}
-                >
-                  <CardContent
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      p: 3,
-                    }}
-                  >
-                    <DirectionsCarIcon
-                      sx={{
-                        fontSize: 50,
-                        color: vehicleType === "CAR" ? "#1976d2" : "gray",
-                      }}
-                    />
-                    <Typography
-                      variant="button"
-                      sx={{ mt: 2, fontWeight: "bold" }}
-                    >
-                      Car / SUV
-                    </Typography>
-                  </CardContent>
-                </Card>
+          <Grid container spacing={4} sx={{ mt: 1 }}>
+            {/* Spacer Grid to align button right */}
+            <Grid item xs={12} md={7}></Grid>
 
-                <Card
-                  variant="outlined"
-                  sx={{
-                    flex: 1,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    bgcolor: vehicleType === "BIKE" ? "#e3f2fd" : "white",
-                    borderColor: vehicleType === "BIKE" ? "#2196f3" : "divider",
-                    borderWidth: vehicleType === "BIKE" ? 2 : 1,
-                    boxShadow: vehicleType === "BIKE" ? 4 : 0,
-                    transform:
-                      vehicleType === "BIKE" ? "scale(1.02)" : "scale(1)",
-                  }}
-                  onClick={() => setVehicleType("BIKE")}
-                >
-                  <CardContent
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      p: 3,
-                    }}
-                  >
-                    <TwoWheelerIcon
-                      sx={{
-                        fontSize: 50,
-                        color: vehicleType === "BIKE" ? "#1976d2" : "gray",
-                      }}
-                    />
-                    <Typography
-                      variant="button"
-                      sx={{ mt: 2, fontWeight: "bold" }}
-                    >
-                      Bike
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Box>
-            </Grid>
             <Grid
               item
               xs={12}
@@ -232,7 +163,7 @@ export default function BookTowDriver() {
                 {isProcessing ? (
                   <CircularProgress size={28} color="inherit" />
                 ) : (
-                  "REQUEST NOW"
+                  "REQUEST TOW TRUCK"
                 )}
               </Button>
             </Grid>
