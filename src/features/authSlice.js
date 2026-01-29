@@ -37,6 +37,7 @@ const deleteCookie = (name) => {
 
 // Check if token exists in cookies on start
 const token = getCookie("token");
+const refreshToken = getCookie("refreshToken");
 const userData = getCookie("user");
 
 const authSlice = createSlice({
@@ -44,20 +45,26 @@ const authSlice = createSlice({
   initialState: {
     user: token && userData ? JSON.parse(userData) : null,
     token: token || null,
+    refreshToken: refreshToken || null,
     emailVerificationStatus: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
     emailVerificationError: null,
   },
   reducers: {
     loginSuccess: (state, action) => {
       state.user = action.payload.user;
-      state.token = action.payload.token;
-      setCookie("token", action.payload.token, 2);
-      setCookie("user", JSON.stringify(action.payload.user), 2);
+      state.token = action.payload.access_token || action.payload.token; 
+      state.refreshToken = action.payload.refresh_token;
+
+      setCookie("token", state.token, 1);
+      setCookie("refreshToken", state.refreshToken, 7);
+      setCookie("user", JSON.stringify(action.payload.user), 7);
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
+      state.refreshToken = null;
       deleteCookie("token");
+      deleteCookie("refreshToken");
       deleteCookie("user");
     },
     resetEmailVerification: (state) => {

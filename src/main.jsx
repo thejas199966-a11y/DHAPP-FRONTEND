@@ -5,6 +5,9 @@ import { store } from "./app/store";
 import App from "./App";
 import "./index.css";
 import "./i18n";
+import setupAxios from "./setupAxios";
+
+setupAxios();
 
 const LoadingMarkup = () => (
   <div style={{ textAlign: 'center', marginTop: '20%' }}>
