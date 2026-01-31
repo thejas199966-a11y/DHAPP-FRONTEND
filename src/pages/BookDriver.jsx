@@ -58,6 +58,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { showNotification } from "../features/notificationSlice";
 import { createTrip, fetchMyBookings, cancelTrip } from "../features/tripSlice";
 import { useTranslation } from "react-i18next";
+import { useMemo } from "react";
 
 export default function BookDriver() {
   const { t } = useTranslation();
@@ -70,7 +71,6 @@ export default function BookDriver() {
   const { bookings } = useSelector((state) => state.trips);
 
   // --- LOCAL STATE ---
-  const [activeBooking, setActiveBooking] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Form States
@@ -97,11 +97,12 @@ export default function BookDriver() {
     dispatch(fetchMyBookings());
   }, [dispatch]);
 
-  useEffect(() => {
-    const active = bookings.find(
-      (trip) => trip.status === "searching" || trip.status === "accepted",
+  const activeBooking = useMemo(() => {
+    return (
+      bookings.find(
+        (trip) => trip.status === "searching" || trip.status === "accepted",
+      ) || null
     );
-    setActiveBooking(active || null);
   }, [bookings]);
 
   // --- HANDLERS ---
@@ -591,7 +592,6 @@ export default function BookDriver() {
               severity: "info",
             }),
           );
-          setActiveBooking(null);
         } else {
           dispatch(
             showNotification({

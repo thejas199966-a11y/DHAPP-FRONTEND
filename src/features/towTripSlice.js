@@ -41,23 +41,6 @@ export const cancelTowTrip = createAsyncThunk(
   },
 );
 
-export const fetchTowDriverOffers = createAsyncThunk(
-  "towTrips/fetchOffers",
-  async (_, { getState, rejectWithValue }) => {
-    try {
-      const token = getState().auth.token;
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.get(
-        `${API_BASE_URL}/tow-trips/driver/offers`,
-        config,
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch offers");
-    }
-  },
-);
-
 export const fetchMyTowBookings = createAsyncThunk(
   "towTrips/fetchMyBookings",
   async (_, { getState, rejectWithValue }) => {
@@ -77,42 +60,6 @@ export const fetchMyTowBookings = createAsyncThunk(
   },
 );
 
-export const acceptTowTripOffer = createAsyncThunk(
-  "towTrips/acceptOffer",
-  async (offerId, { getState, rejectWithValue }) => {
-    try {
-      const token = getState().auth.token;
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.post(
-        `${API_BASE_URL}/tow-trips/driver/accept-offer/${offerId}`,
-        {},
-        config,
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to accept offer");
-    }
-  },
-);
-
-export const rejectTowTripOffer = createAsyncThunk(
-  "towTrips/rejectOffer",
-  async (offerId, { getState, rejectWithValue }) => {
-    try {
-      const token = getState().auth.token;
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.post(
-        `${API_BASE_URL}/tow-trips/driver/reject-offer/${offerId}`,
-        {},
-        config,
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to reject offer");
-    }
-  },
-);
-
 const towTripSlice = createSlice({
   name: "towTrips",
   initialState: {
@@ -124,17 +71,8 @@ const towTripSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchTowDriverOffers.fulfilled, (state, action) => {
-        state.offers = action.payload;
-      })
       .addCase(fetchMyTowBookings.fulfilled, (state, action) => {
         state.bookings = action.payload;
-      })
-      .addCase(acceptTowTripOffer.fulfilled, (state, action) => {
-        state.offers = state.offers.filter((o) => o.id !== action.meta.arg);
-      })
-      .addCase(rejectTowTripOffer.fulfilled, (state, action) => {
-        state.offers = state.offers.filter((o) => o.id !== action.meta.arg);
       })
       // Handle Cancel Trip
       .addCase(cancelTowTrip.fulfilled, (state, action) => {

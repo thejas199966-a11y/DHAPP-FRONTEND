@@ -13,56 +13,6 @@ const getAuthConfig = (getState) => {
   };
 };
 
-// Fetch Pending Offers (Driver Side)
-export const fetchDriverOffers = createAsyncThunk(
-  "trips/fetchDriverOffers",
-  async (_, { getState, rejectWithValue }) => {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/trips/driver/offers`,
-        getAuthConfig(getState),
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch offers");
-    }
-  },
-);
-
-// Accept an Offer (Driver Side)
-export const acceptTripOffer = createAsyncThunk(
-  "trips/acceptTripOffer",
-  async (offerId, { getState, rejectWithValue }) => {
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/trips/driver/accept-offer/${offerId}`,
-        {},
-        getAuthConfig(getState),
-      );
-      return { offerId, ...response.data };
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to accept offer");
-    }
-  },
-);
-
-// Reject an Offer (Driver Side)
-export const rejectTripOffer = createAsyncThunk(
-  "trips/rejectTripOffer",
-  async (offerId, { getState, rejectWithValue }) => {
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/trips/driver/reject-offer/${offerId}`,
-        {},
-        getAuthConfig(getState),
-      );
-      return { offerId };
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to reject offer");
-    }
-  },
-);
-
 // Create a user Request
 export const createTrip = createAsyncThunk(
   "trips/createTrip",
@@ -140,22 +90,6 @@ const tripSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch Offers
-      .addCase(fetchDriverOffers.fulfilled, (state, action) => {
-        state.offers = action.payload;
-      })
-      // Accept Offer
-      .addCase(acceptTripOffer.fulfilled, (state, action) => {
-        state.offers = state.offers.filter(
-          (o) => o.id !== action.payload.offerId,
-        );
-      })
-      // Reject Offer
-      .addCase(rejectTripOffer.fulfilled, (state, action) => {
-        state.offers = state.offers.filter(
-          (o) => o.id !== action.payload.offerId,
-        );
-      })
       // Fetch My Bookings
       .addCase(fetchMyBookings.fulfilled, (state, action) => {
         state.bookings = action.payload;

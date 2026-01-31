@@ -3,23 +3,27 @@ import { store } from "./app/store";
 import { loginSuccess, logout } from "./features/authSlice";
 
 const setupAxios = () => {
-  // 1. Response Interceptor
   axios.interceptors.response.use(
     (response) => response,
     async (error) => {
       const originalRequest = error.config;
+
+      if (
+        originalRequest.url.includes("/auth/refresh") ||
+        originalRequest.url.includes("/auth/login")
+      ) {
+        return Promise.reject(error);
+      }
 
       // Check if error is 401 (Unauthorized) and we haven't retried yet
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
         try {
-          // Get the refresh token from Redux state
           const state = store.getState();
           const refreshToken = state.auth.refreshToken;
 
           if (!refreshToken) {
-            // No refresh token? Logout.
             store.dispatch(logout());
             return Promise.reject(error);
           }
@@ -32,7 +36,6 @@ const setupAxios = () => {
 
           const { access_token, refresh_token } = response.data;
 
-          // Update Redux with new tokens
           store.dispatch(
             loginSuccess({
               token: access_token,
@@ -41,13 +44,10 @@ const setupAxios = () => {
             }),
           );
 
-          // Update the header of the failed request with the NEW token
+          // Update header and retry original request
           originalRequest.headers["Authorization"] = `Bearer ${access_token}`;
-
-          // Retry the original request
           return axios(originalRequest);
         } catch (refreshError) {
-          // Refresh failed (e.g., refresh token also expired)? Logout.
           store.dispatch(logout());
           return Promise.reject(refreshError);
         }

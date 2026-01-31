@@ -28,34 +28,18 @@ import { showNotification } from "../features/notificationSlice";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { closeLoginModal } from "../features/authModalSlice";
-import user_media_mp4 from "../assets/videos/user_login_signup.mp4";
-import user_media_webm from "../assets/videos/user_login_signup.webm";
-import user_media_poster from "../assets/videos/user_login_signup.jpg";
-
-// NOTE: You can replace these with specific videos for each role
-// For now, we are using the same video for all roles.
-const videoSources = {
-  mp4: user_media_mp4,
-  webm: user_media_webm,
-  poster: user_media_poster,
-};
 
 // Icons
-import PersonIcon from "@mui/icons-material/Person";
-import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
-import BusinessIcon from "@mui/icons-material/Business";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import { useTranslation } from "react-i18next";
 
 const LoginModal = () => {
   const { t } = useTranslation();
   const [isSignup, setIsSignup] = useState(false);
-  const [role, setRole] = useState("user"); // 'user' | 'driver' | 'towTruckDriver'
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef(null);
@@ -92,13 +76,8 @@ const LoginModal = () => {
     email: "",
     password: "",
     full_name: "",
-    // Extra fields for specific roles
-    license_number: "", // For Driver
-    vehicle_type: "", // For Driver
-    phone_number: "", // For Driver
   });
 
-  const navigate = useNavigate();
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const handleEmailChange = (e) => {
@@ -113,28 +92,6 @@ const LoginModal = () => {
       dispatch(verifyEmail(formData.email));
     }
   };
-
-  // --- CONFIG FOR ROLES (ICONS & VIDEOS) ---
-  const roleData = [
-    {
-      id: "user",
-      label: t("login.user_role"),
-      icon: PersonIcon,
-      videoSrc: videoSources,
-    },
-    {
-      id: "driver",
-      label: t("login.driver_role"),
-      icon: DirectionsCarIcon,
-      videoSrc: videoSources,
-    },
-    {
-      id: "tow_truck_driver",
-      label: "Tow Driver",
-      icon: LocalShippingIcon,
-      videoSrc: videoSources,
-    },
-  ];
 
   useEffect(() => {
     setTimeout(() => {
@@ -173,7 +130,6 @@ const LoginModal = () => {
 
   const handleClose = () => {
     if (loading) return;
-    setRole("user");
     dispatch(closeLoginModal());
   };
 
@@ -194,7 +150,7 @@ const LoginModal = () => {
     setLoading(true);
 
     const endpoint = isSignup ? "/auth/signup" : "/auth/login";
-    const payload = { ...formData, role: role };
+    const payload = { ...formData, role: "user" };
 
     try {
       const res = await axios.post(
@@ -206,9 +162,6 @@ const LoginModal = () => {
         loginSuccess({ token: res.data.access_token, user: res.data.user }),
       );
       handleClose();
-      if (res.data.user.role === "driver") navigate("/driver-dashboard");
-      if (res.data.user.role === "tow_truck_driver")
-        navigate("/tow-driver-dashboard");
     } catch (err) {
       dispatch(
         showNotification({
@@ -295,122 +248,6 @@ const LoginModal = () => {
                   mx: 2,
                 }}
               >
-                {/* --- CUSTOM ROLE SELECTOR --- */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 1.5,
-                    mb: 3,
-                  }}
-                >
-                  {roleData.map((item) => {
-                    const isActive = role === item.id;
-                    return (
-                      <Box
-                        key={item.id}
-                        onClick={() => !loading && setRole(item.id)}
-                        sx={{
-                          flex: 1,
-                          height: 100, // Fixed height for the card
-                          borderRadius: 2,
-                          border: isActive
-                            ? "2px solid #1976d2"
-                            : "1px solid #e0e0e0",
-                          position: "relative",
-                          overflow: "hidden",
-                          cursor: loading ? "not-allowed" : "pointer",
-                          transition: "all 0.3s ease",
-                          bgcolor: isActive ? "transparent" : "#fff",
-                          "&:hover": {
-                            borderColor: "#1976d2",
-                          },
-                        }}
-                      >
-                        {/* Background Video (Only visible when active) */}
-                        {isActive && (
-                          <video
-                            key={item.videoSrc.mp4} // Re-mount video when source changes
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            poster={item.videoSrc.poster}
-                            style={{
-                              position: "absolute",
-                              top: 0,
-                              left: 0,
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              zIndex: 0,
-                              opacity: 0.8,
-                            }}
-                          >
-                            {/* Provide WebM for better compression */}
-                            <source
-                              src={item.videoSrc.webm}
-                              type="video/webm"
-                            />
-                            {/* Fallback to MP4 */}
-                            <source src={item.videoSrc.mp4} type="video/mp4" />
-                          </video>
-                        )}
-                        {/* Optional Overlay to improve text contrast on video */}
-                        {isActive && (
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              top: 0,
-                              left: 0,
-                              width: "100%",
-                              height: "100%",
-                              bgcolor: "rgba(255, 255, 255, 0.7)", // White tint overlay
-                              zIndex: 1,
-                            }}
-                          />
-                        )}
-
-                        {/* Content Container (Icon + Text) */}
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            zIndex: 2,
-                            width: "100%",
-                            // Nav-like animation logic:
-                            top: isActive ? "8px" : "50%",
-                            left: "50%",
-                            transform: isActive
-                              ? "translate(-50%, 0) scale(0.85)"
-                              : "translate(-50%, -50%) scale(1)",
-                            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: isActive ? "#1565c0" : "#757575",
-                          }}
-                        >
-                          <item.icon
-                            sx={{ fontSize: isActive ? 28 : 32, mb: 0.5 }}
-                          />
-                          <Typography
-                            variant="button"
-                            sx={{
-                              fontSize: isActive ? "0.75rem" : "0.875rem",
-                              fontWeight: "bold",
-                              lineHeight: 1.2,
-                            }}
-                          >
-                            {item.label}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    );
-                  })}
-                </Box>
-                {/* --- END CUSTOM ROLE SELECTOR --- */}
-
                 <Typography variant="h5" sx={{ mb: 1, fontWeight: "bold" }}>
                   {isSignup
                     ? t("login.create_account_title")
@@ -421,130 +258,23 @@ const LoginModal = () => {
                   color="text.secondary"
                   sx={{ mb: 3 }}
                 >
-                  {role === "driver"
-                    ? t("login.driver_subtitle")
-                    : t("login.user_subtitle")}
+                  {t("login.user_subtitle")}
                 </Typography>
 
                 <form onSubmit={handleSubmit}>
                   {isSignup && (
-                    <>
-                      {/* Fields for User/Driver/Tow Full Name */}
-                      {(role === "user" ||
-                        role === "driver" ||
-                        role === "tow_truck_driver") && (
-                        <TextField
-                          fullWidth
-                          label={t("login.full_name_label")}
-                          margin="normal"
-                          disabled={loading}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              full_name: e.target.value,
-                            })
-                          }
-                        />
-                      )}
-
-                      {/* Fields Specific to Tow Truck Driver */}
-                      {role === "tow_truck_driver" && (
-                        <>
-                          <TextField
-                            fullWidth
-                            label="Phone Number"
-                            margin="normal"
-                            disabled={loading}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                phone_number: e.target.value,
-                              })
-                            }
-                          />
-                          <TextField
-                            fullWidth
-                            label="Vehicle Number"
-                            margin="normal"
-                            disabled={loading}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                vehicle_number: e.target.value,
-                              })
-                            }
-                          />
-                        </>
-                      )}
-
-                      {/* Fields Specific to Driver */}
-                      {role === "driver" && (
-                        <>
-                          <TextField
-                            fullWidth
-                            label={t("login.phone_number_label")}
-                            margin="normal"
-                            disabled={loading}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                phone_number: e.target.value,
-                              })
-                            }
-                          />
-                          <TextField
-                            fullWidth
-                            label={t("login.license_number_label")}
-                            margin="normal"
-                            disabled={loading}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                license_number: e.target.value,
-                              })
-                            }
-                          />
-                          <FormControl
-                            fullWidth
-                            margin="normal"
-                            disabled={loading}
-                          >
-                            <InputLabel>
-                              {t("login.vehicle_type_label")}
-                            </InputLabel>
-                            <Select
-                              value={formData.vehicle_type}
-                              label={t("login.vehicle_type_label")}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  vehicle_type: e.target.value,
-                                })
-                              }
-                              disabled={loading}
-                            >
-                              <MenuItem value="SEDAN">
-                                {t("login.sedan")}
-                              </MenuItem>
-                              <MenuItem value="SUV">{t("login.suv")}</MenuItem>
-                              <MenuItem value="HATCHBACK">
-                                {t("login.hatchback")}
-                              </MenuItem>
-                              <MenuItem value="LUXURY">
-                                {t("login.luxury")}
-                              </MenuItem>
-                              <MenuItem value="TEMPO">
-                                {t("login.tempo")}
-                              </MenuItem>
-                              <MenuItem value="MINIBUS">
-                                {t("login.minibus")}
-                              </MenuItem>
-                              <MenuItem value="BUS">{t("login.bus")}</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </>
-                      )}
-                    </>
+                    <TextField
+                      fullWidth
+                      label={t("login.full_name_label")}
+                      margin="normal"
+                      disabled={loading}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          full_name: e.target.value,
+                        })
+                      }
+                    />
                   )}
 
                   <TextField
@@ -644,25 +374,21 @@ const LoginModal = () => {
                   </Button>
                 </form>
 
-                {/* Social Login only for 'user' role usually */}
-                {role === "user" && (
-                  <>
-                    <Divider sx={{ my: 2 }}>{t("login.or_divider")}</Divider>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        opacity: loading ? 0.5 : 1,
-                        pointerEvents: loading ? "none" : "auto",
-                      }}
-                    >
-                      <GoogleLogin
-                        onSuccess={handleGoogleSuccess}
-                        onError={handleGoogleError}
-                      />
-                    </Box>
-                  </>
-                )}
+                {/* Social Login */}
+                <Divider sx={{ my: 2 }}>{t("login.or_divider")}</Divider>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    opacity: loading ? 0.5 : 1,
+                    pointerEvents: loading ? "none" : "auto",
+                  }}
+                >
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                  />
+                </Box>
 
                 <Button
                   sx={{ mt: 2 }}

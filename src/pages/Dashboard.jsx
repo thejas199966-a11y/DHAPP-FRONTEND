@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react";
 import {
   Container,
   Grid,
   Card,
   CardMedia,
   Typography,
-  Button,
   Box,
   useTheme,
   useMediaQuery,
@@ -15,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 // --- Components ---
-import TripPlanner from "../components/TripPlanner";
 import AnimatedTravelButton from "../components/AnimatedTravelButton";
 import AnimatedDriverButton from "../components/AnimatedDriverButton";
 
@@ -93,9 +90,6 @@ const Dashboard = () => {
           ))}
         </Carousel>
       </Card>
-
-      {/* Trip Planner Component */}
-      {/* <TripPlanner /> */}
 
       {/* 2. Action Buttons Section */}
       <Container maxWidth="lg">

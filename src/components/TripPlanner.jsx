@@ -166,7 +166,7 @@ export default function TripPlanner() {
         showNotification({
           message: locationError,
           severity: "info",
-        })
+        }),
       );
     }
     if (initialLocation && initialAddress) {
@@ -192,7 +192,7 @@ export default function TripPlanner() {
 
       if (res.data.routes && res.data.routes.length > 0) {
         const coordinates = res.data.routes[0].geometry.coordinates.map(
-          (coord) => [coord[1], coord[0]]
+          (coord) => [coord[1], coord[0]],
         );
         setRoutePositions(coordinates);
       }
@@ -219,7 +219,7 @@ export default function TripPlanner() {
 
     try {
       const res = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}`,
       );
       if (res.data.length > 0) {
         const { lat, lon } = res.data[0];
@@ -236,7 +236,7 @@ export default function TripPlanner() {
           showNotification({
             message: "Location not found!",
             severity: "warning",
-          })
+          }),
         );
       }
     } catch (e) {
@@ -244,7 +244,7 @@ export default function TripPlanner() {
         showNotification({
           message: "Error searching location",
           severity: "error",
-        })
+        }),
       );
     }
   };
@@ -255,7 +255,7 @@ export default function TripPlanner() {
 
     try {
       const res = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
       );
       const address = res.data.display_name;
       if (type === "start") {
@@ -283,11 +283,11 @@ export default function TripPlanner() {
 
   const onStartDrag = useMemo(
     () => ({ dragend: (e) => handleMarkerDrag(e, "start") }),
-    []
+    [],
   );
   const onEndDrag = useMemo(
     () => ({ dragend: (e) => handleMarkerDrag(e, "end") }),
-    []
+    [],
   );
 
   const handleSubmit = (e) => {
@@ -298,7 +298,7 @@ export default function TripPlanner() {
           showNotification({
             message: `Please fill in the ${key} field.`,
             severity: "warning",
-          })
+          }),
         );
         return true;
       }
@@ -313,7 +313,7 @@ export default function TripPlanner() {
           message:
             "Please ensure both start point and destination are set correctly.",
           severity: "warning",
-        })
+        }),
       );
       return;
     }

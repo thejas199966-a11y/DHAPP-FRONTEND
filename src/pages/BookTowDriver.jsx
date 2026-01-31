@@ -17,6 +17,8 @@ import { showNotification } from "../features/notificationSlice";
 // Components
 import TowTripPlanner from "../components/TowTripPlanner";
 import TowTrackingView from "../components/TowTrackingView";
+import { useMemo } from "react";
+import { useCallback } from "react";
 
 export default function BookTowDriver() {
   const dispatch = useDispatch();
@@ -25,7 +27,6 @@ export default function BookTowDriver() {
   const { bookings: towBookings } = useSelector((state) => state.towTrips);
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeBooking, setActiveBooking] = useState(null);
 
   // Local State
   const [plannerData, setPlannerData] = useState({
@@ -47,19 +48,20 @@ export default function BookTowDriver() {
     dispatch(fetchMyTowBookings());
   }, [dispatch]);
 
-  useEffect(() => {
-    const active = towBookings.find(
-      (trip) =>
-        trip.status === "searching" ||
-        trip.status === "accepted" ||
-        trip.status === "in_progress",
+  const activeBooking = useMemo(() => {
+    return (
+      towBookings?.find(
+        (trip) =>
+          trip.status === "searching" ||
+          trip.status === "accepted" ||
+          trip.status === "in_progress",
+      ) || null
     );
-    setActiveBooking(active || null);
   }, [towBookings]);
 
-  const handlePlanChange = (data) => {
+  const handlePlanChange = useCallback((data) => {
     setPlannerData(data);
-  };
+  }, []);
 
   const handleBook = async () => {
     if (!isValid) {

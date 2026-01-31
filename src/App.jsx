@@ -18,23 +18,12 @@ import MainLayout from "./layouts/MainLayout";
 // Pages
 import UserDashboard from "./pages/Dashboard";
 import BookDriver from "./pages/BookDriver";
-import DriverDashboard from "./pages/DriverDashboard";
 import NotFound from "./pages/NotFound";
-import TowDriverDashboard from "./pages/TowDriverDashboard";
 import BookTowDriver from "./pages/BookTowDriver";
 
 function App() {
   const { mode } = useSelector((state) => state.theme);
   const theme = mode === "light" ? lightTheme : darkTheme;
-  const { token, user } = useSelector((state) => state.auth);
-
-  const HomeRoute = () => {
-    if (token) {
-      if (user?.role === "driver") return <Navigate to="/driver-dashboard" />;
-      if (user?.role === "tow_truck_driver") return <Navigate to="/tow-driver-dashboard" />;
-    }
-    return <UserDashboard />;
-  };
 
   return (
     <Router>
@@ -44,7 +33,7 @@ function App() {
         <LoginModal />
         <Routes>
           <Route element={<MainLayout />}>
-            <Route path="/" element={<HomeRoute />} />
+            <Route path="/" element={<UserDashboard />} />
             <Route
               path="/book-driver"
               element={
@@ -58,22 +47,6 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["user"]}>
                   <BookTowDriver />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/driver-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["driver"]}>
-                  <DriverDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tow-driver-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["tow_truck_driver"]}>
-                  <TowDriverDashboard />
                 </ProtectedRoute>
               }
             />
